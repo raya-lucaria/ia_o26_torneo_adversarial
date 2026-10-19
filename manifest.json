@@ -1,10 +1,10 @@
 {
   "version": 1,
-  "semilla_maestra": 1298610396519999414,
+  "semilla_maestra": 955029597632477769,
   "motor": "1.0.0",
   "imagen": {
     "nombre": "torneo-bot-base:local",
-    "digest": "sha256:e50bd6ff64f7c219bc8e1e57f75ebe97923f172c97140c501c54f4f3b4c21b07"
+    "digest": "sha256:b02182d5f0cef81aa0aee71f711d33b92fb731284ac43fdb44355ae1ac874341"
   },
   "participantes": {
     "montecarlo": {
