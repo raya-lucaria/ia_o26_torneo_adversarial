@@ -1,0 +1,3 @@
+# Incidentes de infraestructura
+
+Ninguno.
