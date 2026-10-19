@@ -1,0 +1,5 @@
+nombre = "equipo_pr_prueba"
+integrantes = [
+  { nombre = "Ana Prueba", clave_unica = "000123456" },
+  { nombre = "Luis Prueba", clave_unica = "000654321" },
+]
