@@ -1,0 +1,5 @@
+nombre = "equipo_pr_malo"
+integrantes = [
+  { nombre = "Equipo del curso", clave_unica = "000000000" },
+  { nombre = "Equipo del curso", clave_unica = "000000000" },
+]

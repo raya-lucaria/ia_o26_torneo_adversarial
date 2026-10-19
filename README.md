@@ -190,3 +190,4 @@ gana es tu idea, medida con partidas.
 | [docs/calificacion.md](docs/calificacion.md) | Liga, desempates, calificación, qué es trampa |
 | [docs/avanzado.md](docs/avanzado.md) | Velocidad, numba, precomputar, `requirements.txt` |
 | [docs/preguntas.md](docs/preguntas.md) | Preguntas frecuentes |
+
