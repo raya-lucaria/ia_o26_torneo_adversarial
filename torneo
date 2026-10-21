@@ -2,18 +2,22 @@
 # ./torneo <comando> — punto de entrada del torneo. Funciona desde cualquier carpeta del repo.
 #
 #   ./torneo jugar mi_equipo montecarlo      ./torneo validar mi_equipo
-#   ./torneo mini mi_equipo                  ./torneo construir
-#   ./torneo --help
+#   ./torneo mini mi_equipo                  ./torneo --help
+#   ./torneo diagnostico                     ./torneo actualizar
+#   ./torneo instalar                        ./torneo construir
 #
 # Con Docker (lo normal): el CLI corre en un contenedor y cada bot en el suyo, con los
 # límites oficiales. Las imágenes se construyen en tu máquina (nunca se descargan de un
 # registro): la primera vez y tras una actualización de sistema/ tarda unos minutos.
 # ./torneo construir las reconstruye a la fuerza (si algo raro pasa con Docker).
-# Con --sin-docker: corre con tu Python (necesita numpy, scipy y numba), sin límites.
+# Sin Docker (--sin-docker; en Codespaces se pone solo): corre con el Python de .venv/, que
+# ./torneo instalar crea con uv (se prepara solo la primera vez). Cuentan el reloj y
+# preparar, pero no hay límite de memoria ni de CPU.
 # Windows: usa WSL2 o Codespaces.
 #
 # Variables opcionales: TORNEO_CONSTRUIR=1 (reconstruir las imágenes aunque estén al día;
-# lo mismo que ./torneo construir), TORNEO_PYTHON (Python para --sin-docker), TORNEO_LIMITES (otro limites.toml).
+# lo mismo que ./torneo construir), TORNEO_PYTHON (Python para --sin-docker),
+# TORNEO_LIMITES (otro limites.toml).
 set -euo pipefail
 
 IMAGEN_CLI="torneo-base:local"
@@ -23,6 +27,12 @@ error() {
     echo "✗ $*" >&2
     exit 2
 }
+
+case "$(uname -s)" in
+MINGW* | MSYS* | CYGWIN*)
+    error "En Windows, ./torneo corre dentro de Ubuntu (WSL2) o en Codespaces, no en Git Bash ni PowerShell. Ver docs/empezar.md."
+    ;;
+esac
 
 aqui="$(pwd -P)" # carpeta desde donde se llamó (para rutas relativas)
 
@@ -53,23 +63,254 @@ for arg in "$@"; do
     [[ -z "$comando" && "$arg" != -* ]] && comando="$arg"
 done
 
-# --- Sin Docker: tu Python, directo ----------------------------------------------------------
+VENV="$RAIZ/.venv"     # el Python del torneo para correr sin Docker (no se sube a git)
+UV_DIR="$RAIZ/.uv"     # uv propio del torneo, si no tienes uno instalado (no se sube a git)
+UV_VERSION="0.9.7"
+PY_TORNEO="3.12"       # la versión de Python de la liga
+REPO_CURSO="${TORNEO_REPO_CURSO:-https://github.com/raya-lucaria/ia_o26_torneo_adversarial.git}"
+# Lo que mantiene el curso: `./torneo actualizar` lo trae tal cual (estudiantes/<tu_equipo>/ nunca).
+RUTAS_CURSO=(sistema torneo docker-compose.yml .github .devcontainer docs README.md AGENTS.md
+    CLAUDE.md .gitattributes .gitignore .dockerignore estudiantes/random estudiantes/montecarlo)
+PRUEBA_PY='import sys, numpy, scipy, numba; assert sys.version_info >= (3, 12)'
+
+venv_listo() {
+    [[ -x "$VENV/bin/python" ]] && "$VENV/bin/python" -c "$PRUEBA_PY" 2>/dev/null
+}
+
+# Máquinas donde numba no existe sin Docker: imprime qué hacer y regresa 0.
+plataforma_sin_numba() {
+    if [[ -f /etc/alpine-release ]] || ldd --version 2>&1 | grep -qi musl; then
+        if [[ "${CODESPACES:-}" == true ]]; then
+            echo "Tu codespace abrió en «modo de recuperación» (un contenedor de emergencia, sin lo del torneo).
+  1. Sube tu trabajo:  git add estudiantes && git commit -m 'Mi trabajo' && git push
+  2. Ctrl+Shift+P → «Codespaces: Rebuild Container» (o borra el codespace y crea uno nuevo).
+  Ver docs/empezar.md#codespaces."
+        else
+            echo "Tu sistema usa musl (por ejemplo Alpine): numba no existe para él. Usa Docker."
+        fi
+        return 0
+    fi
+    if [[ "$(uname -s)" == Darwin && "$(uname -m)" == x86_64 ]]; then
+        echo "En Mac con procesador Intel no hay numba para correr sin Docker: usa Docker
+  (./torneo sin --sin-docker; ver docs/empezar.md) o Codespaces."
+        return 0
+    fi
+    return 1
+}
+
+# Deja en $UV un uv que funcione: el tuyo, el del torneo o uno recién descargado en .uv/.
+conseguir_uv() {
+    UV="$(command -v uv || true)"
+    [[ -z "$UV" && -x "$UV_DIR/uv" ]] && UV="$UV_DIR/uv"
+    [[ -n "$UV" ]] && return 0
+    local instalador="https://astral.sh/uv/$UV_VERSION/install.sh"
+    echo "Descargando uv $UV_VERSION en .uv/ (instala Python y las librerías; solo la primera vez)..."
+    if command -v curl >/dev/null 2>&1; then
+        curl -LsSf "$instalador" | env UV_UNMANAGED_INSTALL="$UV_DIR" sh >/dev/null 2>&1 || true
+    elif command -v wget >/dev/null 2>&1; then
+        wget -qO- "$instalador" | env UV_UNMANAGED_INSTALL="$UV_DIR" sh >/dev/null 2>&1 || true
+    fi
+    [[ -x "$UV_DIR/uv" ]] && UV="$UV_DIR/uv"
+    [[ -n "$UV" ]]
+}
+
+# ./torneo instalar: .venv/ con Python 3.12, el motor y las librerías, en versiones ya
+# compiladas e idénticas a las de la liga (nunca se compila nada). Usa uv; si no se puede
+# conseguir, el python3 (3.12 o más nuevo) de tu sistema. Repetirlo no rompe nada.
+instalar() {
+    local razon
+    if razon="$(plataforma_sin_numba)"; then error "$razon"; fi
+    if [[ -e "$VENV" ]] && ! "$VENV/bin/python" -c 'import sys; assert sys.version_info >= (3, 12)' 2>/dev/null; then
+        echo "El .venv/ que había no sirve (Python viejo o roto): lo rehago. Tu código no se toca."
+        rm -rf "$VENV"
+    fi
+    local con_uv=0
+    conseguir_uv && con_uv=1
+    if [[ ! -x "$VENV/bin/python" ]]; then
+        echo "Creando el entorno .venv/ con Python $PY_TORNEO ..."
+        if ((con_uv)); then
+            # --seed: el .venv/ trae pip, por si después instalas algo a mano.
+            "$UV" venv --quiet --seed --python "$PY_TORNEO" "$VENV" ||
+                error "No se pudo crear .venv/. Revisa tu conexión a internet y repite: ./torneo instalar"
+        else
+            local py="${TORNEO_PYTHON:-$(command -v python3 || true)}"
+            [[ -n "$py" ]] && "$py" -c 'import sys; assert sys.version_info >= (3, 12)' 2>/dev/null ||
+                error "No pude descargar uv y tu python3 no es 3.12 o más nuevo. Revisa tu conexión a internet y repite: ./torneo instalar"
+            "$py" -m venv "$VENV" ||
+                error "No se pudo crear .venv/. En Ubuntu o WSL: sudo apt install python3-venv, y repite: ./torneo instalar"
+        fi
+    fi
+    instalar_paquetes() {
+        if ((con_uv)); then
+            "$UV" pip install --quiet --python "$VENV/bin/python" "$@"
+        else
+            "$VENV/bin/python" -m pip install --quiet --disable-pip-version-check "$@"
+        fi
+    }
+    local binarios=(--only-binary=:all: -c "$RAIZ/sistema/constraints.txt")
+    echo "Instalando el motor y sus librerías (numpy, scipy, numba) en .venv/ ..."
+    if ! instalar_paquetes "${binarios[@]}" -r "$RAIZ/sistema/requirements.txt" ||
+        ! instalar_paquetes --no-deps -e "$RAIZ/sistema"; then
+        error "Falló la instalación. Revisa tu conexión a internet y repite: ./torneo instalar
+  Si vuelve a fallar, corre ./torneo diagnostico y manda lo que imprime."
+    fi
+    local req
+    for req in "$RAIZ"/estudiantes/*/requirements.txt; do
+        [[ -f "$req" ]] && grep -qvE '^[[:space:]]*(#|$)' "$req" || continue
+        echo "Instalando ${req#"$RAIZ"/} ..."
+        instalar_paquetes "${binarios[@]}" -r "$req" ||
+            error "No se pudo instalar ${req#"$RAIZ"/}: revisa que cada línea sea paquete==versión (ver docs/avanzado.md)."
+    done
+    venv_listo || error "La instalación quedó incompleta: repite ./torneo instalar"
+    echo "✓ Listo: .venv/ tiene $("$VENV/bin/python" --version) con el motor, numpy, scipy y numba."
+    echo "  ./torneo lo usa solo. Para tu editor, tu asistente de IA y tus scripts, actívalo en"
+    echo "  cada terminal nueva (verás (.venv) al inicio de la línea):"
+    echo "      source .venv/bin/activate"
+}
+
+# ./torneo diagnostico: qué hay en esta máquina y qué falta, sin instalar nada.
+diagnostico() {
+    local n d razon pendientes
+    echo "Diagnóstico del torneo (si pides ayuda, copia y pega TODO esto):"
+    echo "  · $(sed -n 's/^version = "\(.*\)"$/torneo \1/p' "$RAIZ/sistema/pyproject.toml" | head -n 1) · $(uname -s) $(uname -m)$([[ "${CODESPACES:-}" == true ]] && echo " · Codespaces")"
+    if razon="$(plataforma_sin_numba)"; then echo "  ❌ $razon"; fi
+    if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+        echo "  ✅ Docker funciona: ./torneo corre con los límites oficiales."
+    elif [[ "${CODESPACES:-}" == true ]]; then
+        echo "  ✅ Sin Docker (normal en Codespaces): ./torneo usa --sin-docker solo."
+    else
+        echo "  ⚠️  Docker no está o no responde: ábrelo, o usa --sin-docker (ver docs/empezar.md)."
+    fi
+    if venv_listo; then
+        echo "  ✅ .venv/ listo: $("$VENV/bin/python" --version)."
+    elif [[ -e "$VENV" ]]; then
+        echo "  ❌ .venv/ incompleto o roto: corre ./torneo instalar"
+    else
+        echo "  ⚠️  .venv/ no existe (hace falta sin Docker y para tu editor): corre ./torneo instalar"
+    fi
+    if [[ "${VIRTUAL_ENV:-}" == "$VENV" ]]; then
+        echo "  ✅ .venv/ activo en esta terminal."
+    elif [[ -n "${VIRTUAL_ENV:-}" ]]; then
+        echo "  ⚠️  Tienes activo OTRO entorno ($VIRTUAL_ENV): corre deactivate y luego source .venv/bin/activate"
+    else
+        echo "  ⚠️  .venv/ no está activo en esta terminal: source .venv/bin/activate"
+    fi
+    if ! git -C "$RAIZ" rev-parse --git-dir >/dev/null 2>&1; then
+        echo "  ❌ Esta carpeta no es un repo de git: clona tu repo privado (ver docs/empezar.md)."
+        return 0
+    fi
+    local rama
+    rama="$(git -C "$RAIZ" branch --show-current)"
+    if [[ "$rama" == main ]]; then echo "  ✅ Rama main."; else echo "  ⚠️  Estás en la rama «$rama»: la prueba de GitHub solo corre en main (git checkout main)."; fi
+    local equipos=0
+    for d in "$RAIZ"/estudiantes/*/; do
+        n="$(basename "$d")"
+        case "$n" in random | montecarlo | humano | tier_* | _*) continue ;; esac
+        equipos=$((equipos + 1))
+        pendientes="$(git -C "$RAIZ" status --porcelain -- "estudiantes/$n" | wc -l | tr -d ' ')"
+        if [[ -z "$(git -C "$RAIZ" ls-files -- "estudiantes/$n")" ]]; then
+            echo "  ❌ estudiantes/$n/ no está en git: git add estudiantes/$n && git commit -m 'Nuestra carpeta' && git push"
+        elif ((pendientes)); then
+            echo "  ⚠️  estudiantes/$n/ tiene $pendientes cambio(s) sin subir: git add estudiantes/$n && git commit -m 'Avance' && git push"
+        elif ! git -C "$RAIZ" cat-file -e "origin/main:estudiantes/$n" 2>/dev/null; then
+            echo "  ⚠️  estudiantes/$n/ no está en GitHub (origin/main) según tu último pull: git push"
+        else
+            echo "  ✅ estudiantes/$n/ guardado y en GitHub."
+        fi
+    done
+    ((equipos)) || echo "  ❌ No hay carpeta de equipo: cp -r estudiantes/montecarlo estudiantes/<tu_equipo> (ver docs/empezar.md)."
+    return 0
+}
+
+# ./torneo actualizar: trae la última versión del curso (todo menos estudiantes/<tu_equipo>/).
+actualizar() {
+    cd "$RAIZ"
+    git rev-parse --git-dir >/dev/null 2>&1 || error "Esta carpeta no es un repo de git."
+    # Un git pull a medias (conflicto en archivos del curso) se resuelve con la versión del curso.
+    local a_medias=0
+    if git rev-parse -q --verify MERGE_HEAD >/dev/null; then
+        a_medias=1
+        [[ -z "$(git diff --name-only --diff-filter=U -- estudiantes)" ]] ||
+            error "Tu git pull tiene conflictos dentro de estudiantes/ (tu código y el de tu compañero). Arréglalos en esos archivos, luego: git add estudiantes && git commit --no-edit, y repite ./torneo actualizar"
+    elif [[ -n "$(git status --porcelain -- estudiantes)" ]]; then
+        error "Tienes cambios sin guardar en estudiantes/. Guárdalos primero:
+    git add estudiantes && git commit -m 'Mi trabajo' && git push
+  y repite: ./torneo actualizar"
+    fi
+    if git remote get-url curso >/dev/null 2>&1; then
+        git remote set-url curso "$REPO_CURSO"
+    else
+        git remote add curso "$REPO_CURSO"
+    fi
+    echo "Bajando la última versión del curso..."
+    git fetch --quiet curso main || error "No pude bajar el repo del curso. Revisa tu conexión a internet y repite: ./torneo actualizar"
+    local r f presentes=()
+    for r in "${RUTAS_CURSO[@]}"; do
+        git cat-file -e "curso/main:$r" 2>/dev/null && presentes+=("$r")
+    done
+    git checkout curso/main -- "${presentes[@]}"
+    # Archivos del curso que el curso ya borró: se borran también aquí.
+    while IFS= read -r f; do
+        git rm --quiet -- "$f"
+    done < <(LC_ALL=C comm -23 <(git ls-files -- "${RUTAS_CURSO[@]}" | LC_ALL=C sort) \
+        <(git ls-tree -r --name-only curso/main -- "${RUTAS_CURSO[@]}" | LC_ALL=C sort))
+    if ((!a_medias)) && git diff --cached --quiet; then
+        echo "✓ Ya tenías la última versión del curso. No hay nada que hacer."
+        return 0
+    fi
+    local mensaje=(-m "Actualizo el sistema del curso")
+    ((a_medias)) && mensaje=(--no-edit) # termina el git pull
+    git commit --quiet "${mensaje[@]}" ||
+        error "No se pudo hacer el commit. Si git pide tu nombre: git config --global user.name \"Tu Nombre\" y git config --global user.email \"tu@correo\"; luego repite ./torneo actualizar"
+    echo "✓ Actualizado (ya hice el commit). Ahora:"
+    echo "  1. Súbelo:                    git push"
+    echo "  2. Tu compañero, en su copia: git pull --no-rebase"
+    echo "  3. Si usas Codespaces:        Ctrl+Shift+P → «Codespaces: Rebuild Container»"
+    echo "  4. Revisa que todo esté bien: ./torneo diagnostico"
+}
+
+case "$comando" in
+instalar | diagnostico | actualizar)
+    if ((ayuda)); then
+        case "$comando" in
+        instalar) echo "./torneo instalar — crea o repara .venv/ (Python $PY_TORNEO, motor, numpy, scipy, numba y los requirements.txt de estudiantes/). Repetirlo no rompe nada." ;;
+        diagnostico) echo "./torneo diagnostico — revisa Docker, .venv/, git y tu carpeta, y dice qué hacer. No cambia nada." ;;
+        actualizar) echo "./torneo actualizar — trae la última versión del curso (nunca toca estudiantes/<tu_equipo>/) y hace el commit." ;;
+        esac
+        exit 0
+    fi
+    "$comando"
+    exit 0
+    ;;
+esac
+
+# --- Codespaces: no hay Docker, así que todo corre sin Docker --------------------------------
+if ((!sin_docker)) && [[ "${CODESPACES:-}" == true ]] && ! docker info >/dev/null 2>&1; then
+    echo "ℹ Codespaces no tiene Docker: corro con --sin-docker." >&2
+    sin_docker=1
+    set -- "$@" --sin-docker
+fi
+
+# --- Sin Docker: el Python de .venv/ (se prepara solo la primera vez) ------------------------
 if ((sin_docker)); then
     py="${TORNEO_PYTHON:-}"
-    [[ -z "$py" && -x "$RAIZ/.venv/bin/python" ]] && py="$RAIZ/.venv/bin/python"
-    [[ -z "$py" ]] && py="$(command -v python3 || true)"
-    if [[ -z "$py" ]] ||
-        ! "$py" -c 'import sys, numpy, scipy, numba; assert sys.version_info >= (3, 12)' 2>/dev/null; then
-        error "Para --sin-docker necesitas Python 3.12 o más nuevo con numpy, scipy y numba:
-    python3 -m pip install -r sistema/requirements.txt
-  O quita --sin-docker para usar Docker (recomendado)."
+    if [[ -z "$py" ]] && venv_listo; then
+        py="$VENV/bin/python"
+    elif [[ -z "$py" ]] && command -v python3 >/dev/null 2>&1 && python3 -c "$PRUEBA_PY" 2>/dev/null; then
+        py="$(command -v python3)" # un entorno tuyo que ya tiene todo
+    elif [[ -z "$py" ]]; then
+        echo "Preparando el entorno .venv/ (solo la primera vez; unos minutos)..."
+        instalar
+        py="$VENV/bin/python"
     fi
+    "$py" -c "$PRUEBA_PY" 2>/dev/null ||
+        error "El Python $py no tiene Python 3.12+ con numpy, scipy y numba. Corre ./torneo instalar"
     PYTHONPATH="$RAIZ/sistema${PYTHONPATH:+:$PYTHONPATH}" exec "$py" -m cli "$@"
 fi
 
 # --- Con Docker --------------------------------------------------------------------------------
 command -v docker >/dev/null 2>&1 ||
-    error "No encontré Docker. Instálalo (ver docs/empezar.md), usa Codespaces, o prueba con --sin-docker."
+    error "No encontré Docker. Instálalo (ver docs/empezar.md), o corre sin Docker: ./torneo instalar (una vez) y luego agrega --sin-docker a tus comandos."
 if ! info="$(docker info 2>&1)"; then
     if [[ "$info" == *"ermission denied"* ]]; then
         error "Tu usuario no tiene permiso para usar Docker. En Linux:

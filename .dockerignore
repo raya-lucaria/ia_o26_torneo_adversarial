@@ -6,6 +6,7 @@ resultados
 **/__pycache__
 **/*.py[cod]
 **/.venv
+.uv
 **/.pytest_cache
 **/.ruff_cache
 **/*.egg-info

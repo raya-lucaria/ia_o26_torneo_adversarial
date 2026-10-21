@@ -41,8 +41,9 @@ FINALES = {
 }
 
 AVISO_SIN_DOCKER = (
-    "⚠ modo sin límites: los tiempos no son representativos y tu código corre sin "
-    "aislamiento. Lo oficial es con Docker (quita --sin-docker)."
+    "⚠ sin Docker: el reloj y el tiempo de preparar sí cuentan, pero no hay límite de "
+    "memoria ni de CPU y tu código corre sin aislamiento. Lo oficial es con Docker o la "
+    "prueba de GitHub (Actions)."
 )
 
 

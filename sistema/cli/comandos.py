@@ -425,6 +425,12 @@ def cmd_calentar(args, entorno: Entorno) -> int:
     return 0
 
 
+def cmd_del_script(args, entorno: Entorno) -> int:
+    """`instalar`, `diagnostico` y `actualizar` los hace el script ./torneo (funcionan aunque
+    falte Python o .venv/); aquí solo aparecen en la ayuda."""
+    raise ErrorCLI(f"{args.comando} lo hace el script: corre ./torneo {args.comando} en tu repo.")
+
+
 def cmd_construir(args, entorno: Entorno) -> int:
     """Las imágenes ya las reconstruyó el script ./torneo (TORNEO_CONSTRUIR=1); aquí falta
     la caché de numba, igual que en `calentar`."""
@@ -448,7 +454,9 @@ def construir_parser() -> argparse.ArgumentParser:
         "--sin-docker",
         action="store_true",
         default=argparse.SUPPRESS,
-        help="bots como subprocesos: rápido para depurar, sin límites ni aislamiento",
+        help="bots como subprocesos con el Python de .venv/ (se prepara solo la primera vez): "
+        "cuentan el reloj y preparar, pero sin límite de memoria ni CPU. "
+        "En Codespaces se pone solo",
     )
     parser = _Parser(
         prog="torneo",
@@ -519,6 +527,14 @@ def construir_parser() -> argparse.ArgumentParser:
         "de actualizar el sistema. Tarda unos minutos.",
     )
     p.set_defaults(funcion=cmd_construir)
+
+    for nombre, ayuda in (
+        ("instalar", "crea o repara .venv/: el Python del torneo para --sin-docker y tu editor"),
+        ("diagnostico", "revisa Docker, .venv/, git y tu carpeta, y dice qué hacer"),
+        ("actualizar", "trae la última versión del curso (nunca toca tu carpeta)"),
+    ):
+        p = sub.add_parser(nombre, parents=[comun], help=ayuda)
+        p.set_defaults(funcion=cmd_del_script)
 
     p = sub.add_parser("imagenes", parents=[comun], help="construye las imágenes de equipos")
     p.add_argument("equipos", nargs="*", help="equipos (sin nombres: todos los de estudiantes/)")

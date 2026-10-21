@@ -53,7 +53,9 @@ jobs:
             echo "$n" >>"$RUNNER_TEMP/equipos.txt"
           done
           if [[ ! -s "$RUNNER_TEMP/equipos.txt" ]]; then
-            msg="No encontré tu carpeta en estudiantes/. Copia estudiantes/montecarlo a estudiantes/<tu_equipo>/ y súbela (ver docs/empezar.md)."
+            # Las carpetas que SÍ hay en este commit: casi siempre falta el commit o el push.
+            vistas="$(cd estudiantes && ls -d */ 2>/dev/null | tr -d / | tr '\n' ' ')"
+            msg="No encontré tu carpeta en estudiantes/ en el commit ${GITHUB_SHA::7} de ${GITHUB_REF_NAME}: solo hay ${vistas:-nada}. Si ya la creaste, falta subirla: git add estudiantes/<tu_equipo> && git commit -m 'Nuestra carpeta' && git push (revisa con: git ls-files estudiantes/). Si aún no la creas: copia estudiantes/montecarlo a estudiantes/<tu_equipo>/ (ver docs/empezar.md)."
             echo "::error::$msg"
             echo "## ⚠️ $msg" >>"$GITHUB_STEP_SUMMARY"
             exit 1

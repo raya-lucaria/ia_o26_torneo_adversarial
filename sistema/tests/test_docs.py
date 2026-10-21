@@ -17,6 +17,7 @@ from liga.tabla import FilaTabla, construir_tabla
 from motor import Estado, Jugada, prob_combate
 
 README = RAIZ / "README.md"
+AGENTS = RAIZ / "AGENTS.md"  # lo leen los asistentes de IA de los alumnos
 DOCS = sorted((RAIZ / "docs").glob("*.md"))
 GUIAS = ["reglas", "empezar", "probar", "entregar", "calificacion", "avanzado", "preguntas"]
 # Capturas de pantalla que el profesor agrega después (docs/img/capturas/).
@@ -110,7 +111,7 @@ def test_readme_y_entregar_dicen_que_solo_cambias_tu_carpeta():
 
 def test_enlaces_relativos_existen():
     enlace = re.compile(r"!?\[[^\]]*\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
-    for archivo in [README, *DOCS]:
+    for archivo in [README, AGENTS, *DOCS]:
         texto = archivo.read_text(encoding="utf-8")
         for destino in enlace.findall(texto):
             if re.match(r"[a-z]+:", destino) or destino.startswith("#"):
@@ -125,7 +126,7 @@ def test_comandos_torneo_de_los_docs_son_validos():
     comandos = pytest.importorskip("cli.comandos")
     parser = comandos.construir_parser()
     vistos = 0
-    for archivo in [README, *DOCS]:
+    for archivo in [README, AGENTS, *DOCS]:
         for bloque in re.findall(r"```[a-z]*\n(.*?)```", archivo.read_text(encoding="utf-8"), re.S):
             for linea in bloque.splitlines():
                 linea = linea.split(" #")[0].strip()

@@ -5,17 +5,17 @@ Para cuando tu bot ya juega y quieres que piense más rápido o mejor. Nada de e
 ## Usar el motor en tu editor
 
 Dentro de `./torneo` el motor ya está instalado. Para que tu editor lo reconozca (autocompletado,
-`from motor import ...` sin errores) y para correr tus scripts de `herramientas/`, instálalo una vez
-en un entorno de Python 3.12 o más nuevo, desde la raíz de tu repo:
+`from motor import ...` sin errores) y para correr tus scripts de `herramientas/`, crea una vez el
+entorno `.venv/` desde la raíz de tu repo y actívalo en cada terminal nueva (detalles en
+[docs/empezar.md](empezar.md#el-entorno-de-python-venv)):
 
 ```bash
-python3 -m venv .venv
+./torneo instalar
 source .venv/bin/activate          # en cada terminal nueva
-pip install -e sistema
 ```
 
 Luego elige ese Python en tu editor (en VS Code: **Python: Select Interpreter** → `.venv`).
-En **Codespaces** basta con correr una vez `pip install -e sistema` en la terminal.
+En **Codespaces** ya está hecho: `.venv/` se crea al abrirlo y las terminales nuevas lo activan.
 
 Con eso también puedes usar `--sin-docker` (ver [docs/probar.md](probar.md)).
 
@@ -119,6 +119,8 @@ sortedcontainers==2.4.0
   `urllib3`, `aiohttp`.
 - En la liga no hay red: todo se instala antes, al construir la imagen de tu equipo.
   `./torneo` la reconstruye sola cuando cambias `requirements.txt`.
+- **Sin Docker** (Codespaces o `--sin-docker`): vuelve a correr `./torneo instalar` cada vez que
+  cambies tu `requirements.txt`, para instalarla en `.venv/`.
 
 ¿Quieres una librería que no se puede? Pídela. Si se aprueba, queda para todos.
 

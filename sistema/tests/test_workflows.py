@@ -175,14 +175,19 @@ def test_codeowners():
     assert (RAIZ / ".github" / "CODEOWNERS").read_text().split() == ["*", "@uumami"]
 
 
-def test_devcontainer_con_docker_y_python():
+def test_devcontainer_sin_docker_con_venv():
+    # Codespaces no levanta Docker (docker-in-docker no funcionó): ./torneo corre ahí con
+    # --sin-docker usando .venv/, que crea `./torneo instalar` al crear el Codespace.
     datos = json.loads((RAIZ / ".devcontainer" / "devcontainer.json").read_text())
-    assert any("docker-in-docker" in f for f in datos["features"])
+    assert "docker" not in json.dumps(datos.get("features", {}))
     assert "3.12" in datos["image"]
     assert "preparar.sh" in datos["postCreateCommand"]
+    ajustes = datos["customizations"]["vscode"]["settings"]
+    assert ajustes["python.defaultInterpreterPath"].endswith("/.venv/bin/python")
     script = (RAIZ / ".devcontainer" / "preparar.sh").read_text()
-    assert "./torneo calentar" in script
-    assert "-e sistema" in script
+    assert "./torneo instalar" in script
+    torneo = (RAIZ / "torneo").read_text()
+    assert '"${CODESPACES:-}" == true' in torneo and 'set -- "$@" --sin-docker' in torneo
 
 
 # --- Resumen de prueba.yml / revisar-pr.yml --------------------------------------------------

@@ -223,6 +223,11 @@ class BotLocal(_BotProceso):
         # Ignora los __pycache__ de la carpeta del bot. Aquí la caché sí se escribe (fuera
         # de la carpeta): sin ella, importar numpy/numba tardaría ~7 s en cada arranque.
         env["PYTHONPYCACHEPREFIX"] = str(Path(tempfile.gettempdir()) / "torneo_pycache")
+        # Un hilo, como en la liga (`BotDocker`): numba/numpy no reparten el trabajo en
+        # todos los núcleos de la máquina (el tiempo se parece más al oficial).
+        for variable in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
+            env[variable] = "1"
+        env["NUMBA_NUM_THREADS"] = "1"
         return {"env": env, "start_new_session": True}
 
     def _senal(self, senal: int) -> None:

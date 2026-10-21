@@ -53,39 +53,85 @@ imágenes cuando cambia `sistema/`.
 
 ### ¿Cómo actualizo el sistema cuando el curso publica una corrección?
 
-Tu repo se creó con «Use this template», así que no recibe las correcciones por sí solo. Tráelas así,
-desde la raíz de tu repo privado:
+Tu repo se creó con «Use this template», así que no recibe las correcciones por sí solo. Un
+integrante, desde la raíz de su repo:
+
+1. Guarda tu trabajo: `git add estudiantes`, `git commit -m "Mi trabajo"`, `git push`.
+2. Actualiza y sube:
+
+   ```bash
+   ./torneo actualizar
+   git push
+   ```
+
+   `actualizar` trae todo lo del curso y hace el commit. **Nunca toca `estudiantes/<tu_equipo>/`**
+   y se niega a correr si tienes cambios sin guardar ahí.
+3. Tu compañero, en su copia: `git pull`. Si dice que hay conflictos, corre `./torneo actualizar`
+   (los resuelve con la versión del curso) y luego `git push`.
+4. En Codespaces: **Ctrl+Shift+P → Codespaces: Rebuild Container**. Con Docker, `./torneo`
+   reconstruye solo las imágenes (unos minutos). Al final, `./torneo diagnostico`.
+
+Si `./torneo actualizar` dice «comando desconocido», tu copia es anterior a ese comando. Una sola
+vez, trae el script nuevo y repite:
 
 ```bash
-git remote add curso https://github.com/raya-lucaria/ia_o26_torneo_adversarial.git   # solo la primera vez
+git remote add curso https://github.com/raya-lucaria/ia_o26_torneo_adversarial.git
 git fetch curso
-git checkout curso/main -- sistema torneo docker-compose.yml .github .devcontainer docs README.md .gitattributes .gitignore .dockerignore
-git commit -m "Actualizo el sistema del curso"
+git checkout curso/main -- torneo
+./torneo actualizar
 git push
 ```
 
-> [!WARNING]
-> **Nunca** agregues `estudiantes` a ese `git checkout`: podrías sobrescribir tu carpeta
-> `estudiantes/<tu_equipo>/`. Copia solo lo que dice el comando.
+(Si `git remote add` dice que `curso` ya existe, sigue con la siguiente línea.)
 
-La siguiente vez que corras `./torneo`, puede tardar un poco más: baja las imágenes nuevas.
+### En Windows dice «the working directory is invalid 'C:/Program Files/Git/torneo'».
+
+Estás corriendo `./torneo` en **Git Bash** (aunque sea dentro de la terminal de VS Code), y ahí no
+funciona. Usa Ubuntu (WSL2): conecta VS Code a WSL, con tu repo clonado dentro de Ubuntu
+([docs/empezar.md](empezar.md#windows-wsl2)). Comprueba con `uname -s`: debe decir `Linux`. Si
+tienes trabajo en la copia de Windows, súbelo antes (`git add`, `git commit`, `git push`) y clona
+de nuevo en Ubuntu. Otra opción: [Codespaces](empezar.md#codespaces).
 
 ### Dice «Docker no responde» o «No encontré Docker».
 
 Abre Docker Desktop y espera a que diga que está corriendo (en Linux: `sudo systemctl start
 docker`). En Windows, corre `./torneo` dentro de Ubuntu (WSL2), no en PowerShell. Si no puedes
-instalar Docker, usa Codespaces ([docs/empezar.md](empezar.md#codespaces)).
+instalar Docker, usa Codespaces ([docs/empezar.md](empezar.md#codespaces)) o corre
+[sin Docker](empezar.md#sin-docker).
+
+### Algo falla al instalar («no hay pip», errores de CMake o de llvmlite…).
+
+No instales nada con el `pip` de tu sistema. Desde la raíz de tu repo corre `./torneo diagnostico`
+y luego `./torneo instalar`: crea `.venv/` con Python 3.12 y todo lo del torneo, sin compilar nada.
+Después, en cada terminal nueva, `source .venv/bin/activate`. Si le pides ayuda a tu asistente de
+IA, dile que lea `AGENTS.md`: ahí está este mismo camino. Si sigue fallando, manda lo que imprime
+`./torneo diagnostico`.
 
 ### ¿Por qué mi bot va bien con `--sin-docker` y pierde por reloj con Docker?
 
-`--sin-docker` no tiene límites: tu bot puede usar todos tus núcleos y toda tu memoria. Con Docker
-tiene 1 núcleo y 1024 MB, como en la liga. Lo que cuenta es lo que pasa con Docker o en GitHub.
+`--sin-docker` no limita la CPU ni la memoria: tu bot corre en una máquina sin otros límites que el
+reloj. Con Docker tiene 1 núcleo y 1024 MB, como en la liga. Lo que cuenta es lo que pasa con Docker
+o en GitHub.
 
 ### Mi editor dice que no encuentra `motor`.
 
-Instálalo una vez en tu entorno de Python con `pip install -e sistema`, desde la raíz de tu repo
-([docs/avanzado.md](avanzado.md#usar-el-motor-en-tu-editor)). Dentro de `./torneo` siempre
-funciona.
+Crea el entorno una vez con `./torneo instalar` y elige `.venv` como intérprete en tu editor
+([docs/avanzado.md](avanzado.md#usar-el-motor-en-tu-editor)). En la terminal, actívalo con
+`source .venv/bin/activate`. Dentro de `./torneo` siempre funciona.
+
+### La prueba de GitHub dice «No encontré tu carpeta en estudiantes/».
+
+Tu carpeta no está en el commit que probó: la creaste pero no la subiste, o la subiste a otra rama
+que no es `main`. Revisa con `git ls-files estudiantes/`; si no aparece, haz
+`git add estudiantes/<tu_equipo>`, `git commit` y `git push`. Si editaste `estudiantes/montecarlo`
+en vez de copiarlo, cópialo primero ([docs/empezar.md](empezar.md#7-crea-tu-carpeta-y-juega-tu-primera-partida)).
+
+### ¿Cuánto me dura Codespaces? ¿Se borra lo que hago?
+
+Tus archivos se guardan aunque cierres la pestaña. El codespace se detiene solo tras unos 30
+minutos sin uso, y se borra si no lo usas en un mes: sube tu trabajo con `git push` al terminar.
+Tienes horas gratis cada mes; detenlo cuando no lo uses. Ver
+[docs/empezar.md](empezar.md#codespaces).
 
 ### ¿Puedo cambiar el motor?
 

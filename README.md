@@ -58,6 +58,12 @@ Reglas completas, con ejemplos resueltos: [docs/reglas.md](docs/reglas.md).
    Verás una tabla con las partidas y la ruta a un visor (`index.html`) para verlas jugada a
    jugada. Desde ahí, mejora tu `strategy.py`.
 
+   **¿Dónde trabajar?** En orden: tu computadora con Mac o Linux, Windows con WSL2, o Codespaces
+   (en el navegador, sin Docker: ahí `./torneo` corre con `--sin-docker` solo). Para tu editor y
+   tu asistente de IA, activa el entorno del torneo en cada terminal nueva:
+   `source .venv/bin/activate` (se crea con `./torneo instalar`; ver
+   [docs/empezar.md](docs/empezar.md#el-entorno-de-python-venv)). ¿Algo falla? `./torneo diagnostico`.
+
 ## Tu carpeta
 
 ```text
@@ -176,7 +182,8 @@ Otro número solo con permiso del profesor.
 ## Herramientas recomendadas
 
 Usa un agente de IA para programar: **Antigravity**, **Cursor**, **Claude Code** o **GitHub
-Copilot**. **Que la IA escriba código; tú piensa la estrategia.** Pídele que lea este README y
+Copilot**. **Que la IA escriba código; tú piensa la estrategia.** Pídele que lea
+[`AGENTS.md`](AGENTS.md) (cómo instalar, correr y qué no puede tocar), este README y
 `docs/reglas.md` antes de empezar. Un bot que una IA hace sola en una noche no llega lejos: lo que
 gana es tu idea, medida con partidas.
 
@@ -191,3 +198,22 @@ gana es tu idea, medida con partidas.
 | [docs/calificacion.md](docs/calificacion.md) | Liga, desempates, calificación, qué es trampa |
 | [docs/avanzado.md](docs/avanzado.md) | Velocidad, numba, precomputar, `requirements.txt` |
 | [docs/preguntas.md](docs/preguntas.md) | Preguntas frecuentes |
+
+## Fe de erratas
+
+Correcciones publicadas después del inicio del curso. Para traerlas a tu repo:
+[¿Cómo actualizo el sistema?](docs/preguntas.md#cómo-actualizo-el-sistema-cuando-el-curso-publica-una-corrección)
+
+- **20 de octubre de 2026 — Codespaces y entorno de Python.**
+  - Codespaces ya no intenta usar Docker (fallaba al crearse y abría en «modo de recuperación», sin
+    pip; por eso numba y llvmlite no se podían instalar). Ahora corre siempre sin Docker, con
+    `.venv/` listo al abrirlo.
+  - Nuevos comandos: `./torneo instalar` (crea o repara `.venv/` con Python 3.12, sin compilar
+    nada), `./torneo diagnostico` (dice qué falta y cómo arreglarlo) y `./torneo actualizar` (trae
+    estas correcciones sin tocar tu carpeta).
+  - Sin Docker, `.venv/` se prepara solo la primera vez y los bots usan un solo hilo, como en la
+    liga.
+  - La prueba de GitHub explica mejor cuándo no encuentra tu carpeta (casi siempre falta el
+    `git push`).
+  - Guía nueva: [El entorno de Python](docs/empezar.md#el-entorno-de-python-venv) (cómo activarlo)
+    e instrucciones para asistentes de IA en [`AGENTS.md`](AGENTS.md).

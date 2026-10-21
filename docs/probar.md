@@ -2,8 +2,10 @@
 
 Todo se corre con `./torneo` desde la carpeta de tu repo (o cualquier subcarpeta). Con Docker
 (lo normal), cada bot corre aislado con los límites de la liga. Agrega `--sin-docker` a cualquier
-comando para correr con tu Python, más rápido pero **sin límites**: sirve para depurar, no para
-medir tiempos.
+comando para correr con el Python de `.venv/` (se prepara solo la primera vez; ver
+[docs/empezar.md](empezar.md#sin-docker)): el reloj y `preparar` sí cuentan, pero **no hay límite de
+memoria ni de CPU**. En **Codespaces** no hay Docker y `--sin-docker` se agrega solo. Para medir con
+los límites de la liga, usa Docker o la [prueba de GitHub](#pruebas-en-github).
 
 ## Comandos
 
@@ -17,6 +19,9 @@ medir tiempos.
 | `./torneo liga <a> <b> <c> ...` | Liga todos contra todos entre los participantes que digas |
 | `./torneo repetir <archivo.json>` | Repite en la terminal una partida guardada en `resultados/` |
 | `./torneo visor <carpeta>` | Vuelve a generar el `index.html` de una carpeta de `resultados/` |
+| `./torneo diagnostico` | Revisa tu máquina, `.venv/`, git y tu carpeta, y dice qué hacer. No cambia nada |
+| `./torneo instalar` | Crea o repara `.venv/`: el Python del torneo que usan `--sin-docker`, tu editor y tus scripts. Después: `source .venv/bin/activate` en cada terminal |
+| `./torneo actualizar` | Trae la última versión del curso (nunca toca tu carpeta) y hace el commit |
 | `./torneo construir` | Reconstruye desde cero las imágenes de Docker del torneo y la caché de numba (unos minutos). Úsalo si algo raro pasa con Docker o después de actualizar el sistema |
 | `./torneo --help` | Ayuda de todos los comandos (y `./torneo jugar --help`, etc.) |
 
@@ -184,8 +189,9 @@ partida de ahí también se repite:
    ([docs/avanzado.md](avanzado.md#usar-el-motor-en-tu-editor)).
 4. **Repite los dados** con `--semilla N` para volver a ver el mismo problema.
 5. **Juega tú contra tu bot** (`./torneo jugar humano <tu_equipo>`) y llévalo a posiciones raras.
-6. **Mide con Docker.** `--sin-docker` no tiene límites: un bot que ahí va bien puede pasarse de
-   reloj o de memoria en la liga.
+6. **Mide con Docker.** `--sin-docker` no limita memoria ni CPU: un bot que ahí va bien puede
+   pasarse de reloj o de memoria en la liga. En Codespaces, mide con la
+   [prueba de GitHub](#pruebas-en-github).
 
 Motivos de derrota y qué hacer:
 
@@ -221,6 +227,9 @@ Para ver el resultado:
 <!-- TODO(profesor): agrega docs/img/capturas/actions_resumen.png y quita este comentario.
 ![Captura: Resumen de una corrida de la prueba en la pestaña Actions, con la tabla de validación y resultados](img/capturas/actions_resumen.png) -->
 
-Si la corrida sale en rojo (✗), abre el paso que falló: el mensaje dice qué arreglar. Las cuentas
+Si la corrida sale en rojo (✗), abre el paso que falló: el mensaje dice qué arreglar. Si dice
+**«No encontré tu carpeta en estudiantes/»**, tu carpeta no está en ese commit de `main`: casi
+siempre falta el `git add` / `commit` / `push` de `estudiantes/<tu_equipo>/` (revísalo con
+`git ls-files estudiantes/`), o la subiste a otra rama. Las cuentas
 personales tienen minutos gratis de Actions al mes para repos privados; cada corrida usa unos
 pocos minutos.

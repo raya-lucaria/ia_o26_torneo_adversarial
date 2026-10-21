@@ -7,13 +7,19 @@ Esta guía te lleva de no tener nada a ver tu primera partida. Quién hace cada 
 
 Si algo falla, revisa [docs/preguntas.md](preguntas.md).
 
-Hay tres formas de probar tu bot. Puedes usar cualquiera:
+Puedes trabajar en cualquiera de estos lugares. Están en orden de recomendación:
 
-| Forma | Qué necesitas | Para qué sirve |
+| Dónde | Qué necesitas | Cómo corre tu bot |
 |---|---|---|
-| **GitHub Actions** | Nada: haces *push* y GitHub juega por ti | Revisar tu bot con los límites reales, sin instalar nada |
-| **Codespaces** | Un navegador | Programar y jugar en una computadora de GitHub con todo listo |
-| **Tu computadora** | Docker (Mac o Linux; en Windows, WSL2) | Lo más rápido para trabajar todos los días |
+| **1. Tu computadora, Mac o Linux** | Docker | Con los límites de la liga. Lo más rápido para trabajar todos los días |
+| **2. Tu computadora, Windows** | WSL2 (Ubuntu dentro de Windows) y Docker | Igual que en Mac o Linux |
+| **3. Codespaces** | Solo un navegador | Sin Docker: cuentan el reloj y `preparar`, pero no la memoria ni la CPU |
+
+Además, cada *push* a `main` que cambie tu carpeta lo prueba **GitHub Actions** con los límites
+de la liga, sin instalar nada: es la referencia oficial ([docs/probar.md](probar.md#pruebas-en-github)).
+
+¿Algo no funciona? Corre `./torneo diagnostico`: revisa tu máquina, tu entorno y tu carpeta, y te
+dice qué hacer. Si pides ayuda, manda lo que imprime.
 
 ## 1. Crea tu cuenta de GitHub
 
@@ -60,9 +66,10 @@ Tu compañero recibe un correo y debe aceptar la invitación.
 
 ## 4. Elige dónde vas a trabajar
 
-- **Mac o Linux:** sigue con el paso 5 (instalar Docker).
-- **Windows:** sigue con [Windows: WSL2](#windows-wsl2) y luego con el paso 6, dentro de Ubuntu.
-- **Sin instalar nada:** salta a [Codespaces](#codespaces).
+1. **Mac o Linux:** sigue con el paso 5 (instalar Docker).
+2. **Windows:** sigue con [Windows: WSL2](#windows-wsl2) y luego con el paso 6, **dentro de Ubuntu**.
+   No uses PowerShell ni Git Bash para `./torneo`.
+3. **Si no puedes instalar Docker** (o tu computadora no da): salta a [Codespaces](#codespaces).
 
 ## 5. Instala Docker
 
@@ -92,6 +99,8 @@ reloj de 30 s). Así lo que ves en tu computadora es lo que pasará en la liga.
 
 Instala también `git` si no lo tienes: en la Terminal escribe `git --version`; si no lo tienes, la
 Mac te ofrece instalarlo.
+
+En una Mac con procesador **Intel**, trabaja siempre con Docker: sin Docker el torneo no corre ahí.
 
 ### Linux
 
@@ -139,12 +148,34 @@ En Windows el torneo corre dentro de **WSL2** (un Ubuntu dentro de Windows).
    ```
 
 5. **Trabaja siempre dentro de Ubuntu**, en tu carpeta de Linux (`cd ~`), no en `C:\` ni en
-   `/mnt/c/`: ahí todo es mucho más lento. Desde Ubuntu, `code .` abre la carpeta en VS Code.
+   `/mnt/c/`: ahí todo es mucho más lento y fallan permisos y finales de línea. Clona tu repo ahí
+   (paso 6).
+6. **Conecta VS Code a Ubuntu.** Instala en VS Code la extensión **WSL** (de Microsoft). Luego
+   **Ctrl+Shift+P → WSL: Connect to WSL**, y abre tu repo con **File → Open Folder** (está en
+   `/home/<tu_usuario>/`). También puedes abrirlo desde Ubuntu: entra a la carpeta y escribe
+   `code .`.
+
+   Abajo a la izquierda de VS Code debe decir **`WSL: Ubuntu`**. Si no lo dice, tu terminal no es
+   Ubuntu.
+
+> [!WARNING]
+> **En Windows, la terminal de VS Code abre por defecto PowerShell o Git Bash**, y ahí `./torneo`
+> no funciona (por ejemplo, Docker dice `the working directory is invalid 'C:/Program
+> Files/Git/torneo'`). Comprueba en qué terminal estás:
+>
+> ```bash
+> uname -s
+> ```
+>
+> Debe decir `Linux`. Si dice `MINGW64_NT…` (Git Bash) o da error (PowerShell), conecta VS Code a
+> WSL (punto 6). Cambiar solo el tipo de terminal no basta si tu repo está en `C:\`: clónalo
+> dentro de Ubuntu.
 
 ## 6. Clona tu repo
 
 Clonar es bajar una copia de tu repo a tu computadora. La forma más fácil con un repo privado es
-con **GitHub CLI** (`gh`):
+con **GitHub CLI** (`gh`). **En Windows, haz todo este paso dentro de Ubuntu (WSL2)**, empezando
+con `cd ~`, no en PowerShell ni en Git Bash.
 
 1. Instala `gh`:
    - **Mac:** si tienes Homebrew, `brew install gh`; si no, descarga el instalador `.pkg` de
@@ -164,11 +195,13 @@ con **GitHub CLI** (`gh`):
    gh auth login
    ```
 
-3. Dile a git quién eres (una sola vez; aparece en tus commits):
+3. Dile a git quién eres y cómo juntar tu trabajo con el de tu compañero (una sola vez; tu
+   nombre aparece en tus commits):
 
    ```bash
    git config --global user.name "Ana Pérez"
    git config --global user.email "tu_correo@ejemplo.com"
+   git config --global pull.rebase false
    ```
 
 4. Clona tu repo (cambia `tu_usuario/tu_repo` por el tuyo) y entra a la carpeta:
@@ -209,7 +242,7 @@ jugar.
    ```
 
    **La primera vez tarda unos minutos antes de empezar:** construye las imágenes de Docker en
-   tu máquina (la primera vez unos minutos) y prepara numba. Si ves `Preparando la caché de numba…`, espera: es normal (≈1 min). Las
+   tu máquina y prepara numba (en Codespaces no hay imágenes: solo numba). Si ves `Preparando la caché de numba…`, espera: es normal (≈1 min). Las
    siguientes veces empieza en segundos.
 
    Las 4 partidas tardan unos 2 a 4 minutos (cada bot tiene 30 s de reloj por partida). Al final
@@ -242,7 +275,9 @@ jugar.
    git pull
    ```
 
-   Antes de empezar a trabajar, cada quien hace `git pull` para tener lo último del otro.
+   Antes de empezar a trabajar, cada quien hace `git pull` para tener lo último del otro. Al
+   terminar, `git add`, `git commit` y `git push`. `./torneo diagnostico` te dice si tu carpeta
+   ya está en GitHub.
 
 No tienes que terminar `INFORME.md` ahora: escríbelo mientras mejoras tu bot. Mientras siga
 igual al de `montecarlo`, `./torneo validar` y la prueba de GitHub te lo recuerdan con un aviso ⚠.
@@ -250,17 +285,33 @@ En la entrega debe describir **tu** bot ([docs/entregar.md](entregar.md#informem
 
 ## Codespaces
 
-Codespaces es una computadora de GitHub con VS Code en tu navegador. Ya trae Docker y todo lo del
-torneo. Sirve en cualquier sistema, también en Windows sin WSL2.
+Codespaces es una computadora de GitHub con VS Code en tu navegador. Sirve en cualquier sistema.
+**No tiene Docker:** ahí `./torneo` corre solo [sin Docker](#sin-docker), con el entorno de Python
+`.venv/` que se prepara al crear el codespace.
 
 1. En tu repo privado: **Code → Codespaces → Create codespace on main**.
 
    <!-- TODO(profesor): agrega docs/img/capturas/codespaces_crear.png y quita este comentario.
    ![Captura: Menú «Code» abierto en la pestaña Codespaces con el botón «Create codespace on main»](img/capturas/codespaces_crear.png) -->
 
-2. La primera vez tarda unos minutos en prepararse.
-3. En la terminal de abajo, sigue desde el [paso 7](#7-crea-tu-carpeta-y-juega-tu-primera-partida).
-4. Para ver el visor, descarga **la carpeta completa** de la corrida, no solo el `index.html`
+2. La primera vez tarda unos minutos: prepara `.venv/` con el motor y sus librerías. Espera a que
+   la terminal diga `✓ Listo`.
+3. Abre una **terminal nueva**: menú **☰ → Terminal → New Terminal**. La línea debe empezar con
+   `(.venv)`. Si no, actívalo (ver [El entorno de Python](#el-entorno-de-python-venv)):
+
+   ```bash
+   source .venv/bin/activate
+   ```
+
+4. Comprueba que todo esté bien:
+
+   ```bash
+   ./torneo diagnostico
+   ```
+
+5. Sigue desde el [paso 7](#7-crea-tu-carpeta-y-juega-tu-primera-partida). Los comandos son los
+   mismos: `./torneo` agrega `--sin-docker` por ti.
+6. Para ver el visor, descarga **la carpeta completa** de la corrida, no solo el `index.html`
    (sin las demás páginas, sus enlaces no abren). Primero empaquétala en la terminal (cambia la
    fecha por la de tu corrida):
 
@@ -271,24 +322,85 @@ torneo. Sirve en cualquier sistema, también en Windows sin WSL2.
    Luego, en el explorador de archivos de la izquierda, clic derecho en `visor.zip` →
    **Download**. En tu computadora descomprímelo y abre su `index.html`.
 
-Tu cuenta tiene horas gratis de Codespaces cada mes. **Detén el codespace cuando no lo uses**
-(<https://github.com/codespaces> → **⋯ → Stop codespace**) para no gastarlas.
+> [!WARNING]
+> Si al abrir el codespace ves un aviso de **recovery mode** («modo de recuperación»), o
+> `./torneo diagnostico` lo dice, el codespace abrió en un contenedor de emergencia sin lo del
+> torneo. Sube tu trabajo (`git add estudiantes`, `git commit -m "Mi trabajo"`, `git push`) y luego
+> **Ctrl+Shift+P → Codespaces: Rebuild Container** (o borra el codespace y crea uno nuevo).
 
-## Sin Docker (solo para depurar rápido)
+**Cómo se usa el tiempo de Codespaces:**
 
-Si tienes Python 3.12 o más nuevo, puedes correr sin Docker agregando `--sin-docker`. Revisa tu
-versión con `python3 --version`. En Mac, si es más vieja, instala una nueva de
-<https://www.python.org/downloads/>. En Ubuntu o WSL instala antes `sudo apt install python3-venv`.
+- **Tus archivos se guardan.** Puedes cerrar la pestaña: al volver, todo sigue ahí (también
+  `.venv/` y lo que no hayas subido). No es como Colab.
+- **Se detiene solo** tras unos 30 minutos sin que lo uses, y lo que estuviera corriendo se corta.
+  No dejes una liga larga corriendo para irte.
+- **Un codespace sin usar por un mes se borra**, con lo que no hayas subido. Al terminar cada
+  sesión: `git add`, `git commit` y `git push`.
+- **Tu cuenta tiene horas gratis cada mes** (más si te das de alta como estudiante en
+  [GitHub Education](https://education.github.com/)). **Detén el codespace cuando no lo uses**
+  (<https://github.com/codespaces> → **⋯ → Stop codespace**) para no gastarlas. Sin tarjeta
+  registrada no te cobran nada: al acabarse las horas, se detiene hasta el mes siguiente.
+- Sin Docker no hay límite de memoria ni de CPU: para medir tu bot con los límites de la liga, haz
+  *push* y mira la [prueba de GitHub](probar.md#pruebas-en-github).
+
+## El entorno de Python (`.venv/`)
+
+`.venv/` es una carpeta en la raíz de tu repo con **el Python del torneo**: Python 3.12, el motor,
+numpy, scipy y numba, en las mismas versiones que la liga. No se sube a git: cada quien tiene el
+suyo.
+
+**Cuándo lo necesitas:**
+
+- **Sin Docker** (Codespaces, o `--sin-docker`): siempre. `./torneo` lo prepara solo la primera vez.
+- **Con Docker:** solo para que tu editor y tu asistente de IA reconozcan `from motor import ...`,
+  y para correr tus scripts de `herramientas/`.
+
+**Crearlo o repararlo** (desde la raíz de tu repo; repetirlo no rompe nada):
 
 ```bash
-python3 -m venv .venv
+./torneo instalar
+```
+
+No necesitas tener Python 3.12: si tu computadora no lo tiene, `./torneo instalar` lo descarga
+para `.venv/` (con [uv](https://docs.astral.sh/uv/)). No instala nada fuera de tu repo y no toca el
+Python de tu sistema.
+
+**Activarlo, en cada terminal nueva** (Mac, Linux, Ubuntu en WSL2 y Codespaces):
+
+```bash
 source .venv/bin/activate
-pip install -e sistema
+```
+
+- Sabes que está activo porque la línea de tu terminal empieza con `(.venv)`, y `which python`
+  termina en `.venv/bin/python`.
+- Cada terminal nueva empieza sin activar (salvo en Codespaces, que lo activa solo). Si cierras la
+  terminal, vuelve a activarlo.
+- Para desactivarlo: `deactivate`.
+- `./torneo` usa `.venv/` aunque no lo actives. Activarlo sirve para lo demás: `python`, tus
+  scripts y tu asistente de IA usan entonces el Python del torneo.
+
+**En tu editor:** en VS Code, **Ctrl+Shift+P → Python: Select Interpreter** → elige el que dice
+`.venv`. En Codespaces ya está elegido.
+
+**Con tu asistente de IA** (Copilot, Claude, Cursor…): pídele que lea `AGENTS.md`. Ahí está este
+mismo camino. Si te propone `pip install` fuera de `.venv/` o crear otro entorno, dile que no: usa
+`./torneo instalar`.
+
+## Sin Docker
+
+Agrega `--sin-docker` a cualquier comando (en Codespaces se agrega solo):
+
+```bash
 ./torneo jugar los_alfa_beta montecarlo --sin-docker
 ```
 
-Es más rápido para arrancar, pero **no hay límites ni aislamiento**: los tiempos no son los de la
-liga. Antes de confiar en un resultado, pruébalo con Docker o en GitHub.
+La primera vez prepara [`.venv/`](#el-entorno-de-python-venv) solo (unos minutos). Si agregas un
+`requirements.txt` a tu carpeta, corre `./torneo instalar` para instalarlo en `.venv/`.
+
+Sin Docker **cuentan el reloj (30 s) y `preparar` (10 s)**, pero **no hay límite de memoria ni de
+CPU ni aislamiento**. Antes de confiar en un resultado, pruébalo con Docker o en GitHub.
+
+No funciona en Mac con procesador Intel (numba no existe ahí sin Docker): usa Docker o Codespaces.
 
 ## Siguiente paso
 

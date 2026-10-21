@@ -1,5 +1,7 @@
 # Material interno del curso. Nunca se publica.
 /privado
+# Notas locales del mantenedor para Claude Code (los alumnos usan AGENTS.md / CLAUDE.md)
+CLAUDE.local.md
 .superpowers/
 
 # Resultados de ligas y partidas locales (./torneo los escribe aquí)
@@ -16,6 +18,8 @@ __pycache__/
 *.so
 .venv/
 venv/
+# uv propio del torneo (lo descarga ./torneo instalar si no tienes uno)
+.uv/
 *.egg-info/
 /build/
 /dist/
