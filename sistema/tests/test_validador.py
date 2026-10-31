@@ -820,3 +820,34 @@ def test_humo_con_docker_usa_imagenes(tmp_path, monkeypatch):
     assert imagenes == {"torneo-bot:los_alfa", validar.IMAGEN_RIVAL}
     assert reporte.ok and any("infraestructura" in a for a in reporte.avisos)
     assert reporte.humo_jugado is False
+
+
+def _avisos_humo_con_preparar(tmp_path, monkeypatch, segundos: float) -> list[str]:
+    """Avisos del humo si `preparar` de ambos bots tarda `segundos` (partidas falsas)."""
+
+    def falsa(*args):
+        return validar.ResultadoPartida(
+            ganador="blancas",
+            motivo="puntos",
+            puntos={"blancas": 3, "negras": 0},
+            preparar_usado={"blancas": segundos, "negras": segundos},
+        )
+
+    monkeypatch.setattr(validar, "jugar_partida", falsa)
+    reporte = validar_equipo(equipo(tmp_path), L, jugar_humo=True)
+    assert reporte.ok and reporte.humo_jugado, reporte.errores
+    return reporte.avisos
+
+
+def test_humo_preparar_lento_es_aviso(tmp_path, monkeypatch):
+    segundos = 0.8 * L.preparar_s  # más de la mitad del límite, pero a tiempo
+    avisos = _avisos_humo_con_preparar(tmp_path, monkeypatch, segundos)
+    lentos = [a for a in avisos if "Tu preparar tardó" in a]
+    assert lentos == [validar.aviso_preparar(segundos, L.preparar_s)]
+    assert f"{segundos:.1f} s de {L.preparar_s:g}" in lentos[0]
+    assert "docs/avanzado.md#numba-que-compila-rápido" in lentos[0]
+
+
+def test_humo_preparar_con_margen_no_avisa(tmp_path, monkeypatch):
+    avisos = _avisos_humo_con_preparar(tmp_path, monkeypatch, 0.2 * L.preparar_s)
+    assert not any("preparar" in a for a in avisos)

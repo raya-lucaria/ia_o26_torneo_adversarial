@@ -56,14 +56,51 @@ def suma_avance(filas: np.ndarray) -> int:
 - **La primera llamada compila**, y compilar tarda (a veces segundos). En la liga cada partida es un
   proceso nuevo y tu carpeta es de solo lectura, así que **tu código numba se compila en cada
   partida**.
-- Por eso, **llama tus funciones numba una vez en `preparar`** (10 s, fuera del reloj), como hace
+- Por eso, **llama tus funciones numba una vez en `preparar`** (20 s, fuera del reloj), como hace
   `montecarlo` con `simular_al_azar`. Lo que no compiles ahí se compila en tu turno y te cuesta
   reloj.
-- Pero `preparar` también tiene límite: si compilar todo tarda más de 10 s, pierdes la partida.
-  Mide cuánto tarda con `./torneo jugar` (con Docker).
+- Pero `preparar` también tiene límite: si compilar todo tarda más de 20 s, pierdes la partida.
+  Mide cuánto tarda con `./torneo validar` y la columna **Preparar máx** de `./torneo jugar` (con
+  Docker), y lee [Numba que compila rápido](#numba-que-compila-rápido).
 - `numba` solo entiende un subconjunto de Python: números, arreglos de numpy, tuplas, ciclos. No
   entiende los objetos `Estado`. Si quieres tu propia representación rápida, mira
   [Modificar el motor](#modificar-el-motor).
+
+## Numba que compila rápido
+
+Compilar es lo más lento de `preparar`, y en la liga tarda más que en tu laptop:
+
+- **En la liga tu código numba se compila desde cero en cada partida.** El motor (`simular_al_azar`
+  y lo demás) ya viene compilado, pero la caché de numba empieza vacía para tu código: todo lo que
+  compila tu `preparar` cuenta en sus 20 s. `cache=True` no ayuda ahí.
+- **Sin Docker parece más rápido de lo que es:** tu carpeta se puede escribir, así que con
+  `cache=True` numba guarda lo compilado y las partidas siguientes ya no compilan. Mide con Docker
+  (o con la prueba de GitHub) y fíjate en la primera partida.
+- **Las máquinas de la liga varían.** La liga corre en máquinas de GitHub: unas son más lentas que
+  otras, y al compilar numba pueden ser hasta ~2,5× más lentas que una laptop rápida. Si tu
+  `preparar` tarda 10 s en tu máquina, en la liga puede pasar de 20 s. Por eso `./torneo validar`
+  avisa (⚠) cuando tu `preparar` pasa de la mitad del límite.
+- **Usa el reloj, no una profundidad fija.** Por la misma razón, una búsqueda a profundidad fija que
+  en tu máquina tarda 0.5 s por jugada puede tardar bastante más en la liga. Decide cuánto pensar con
+  `tiempo_restante` (profundización iterativa) y así tu bot se ajusta a la máquina que le toque.
+
+Para que compile rápido:
+
+- **No crees arreglos dentro de `@njit` en el camino caliente** (`np.empty`, `np.zeros`, rebanadas
+  como `tablero[a:b]`, tuplas que se arman en cada llamada). Además de ser lentos al correr, hacen
+  más grande lo que numba compila. Preasigna los búferes en Python (en `preparar`) y pásalos como
+  argumentos.
+- **Una sola firma por función.** numba compila una versión por cada combinación de tipos con la
+  que llamas una función. Llámala siempre con los mismos tipos: no mezcles arreglos de solo lectura
+  y escribibles, `int32` e `int64`, ni números de Python (literales) con enteros de numpy.
+- **En `preparar` compila exactamente lo que vas a usar:** llama cada función con argumentos de los
+  mismos tipos que usarás al jugar. Si en tu turno la llamas con otros tipos, se compila otra vez y
+  te cuesta reloj.
+- **Mide:** `./torneo validar` te dice cuánto tardó tu `preparar` y avisa si estás cerca del
+  límite; en `./torneo jugar` mira la columna **Preparar máx**.
+- **No metas una caché precompilada de numba en `data/`** (archivos `.nbi`/`.nbc` u otro código
+  compilado): se considera código nativo propio, que está prohibido (ver
+  [docs/calificacion.md](calificacion.md#qué-es-trampa)). `data/` es solo para datos.
 
 ## Precomputar
 
@@ -82,7 +119,7 @@ Reglas:
 - `data/` se sube con tu carpeta: 100 MB en total y 50 MB por archivo. Cualquier formato
   (`.npy`, `.npz`, `.json`, `pickle`…).
 - `data/` son **datos**, no código escondido.
-- En la liga se lee en `preparar`, que tiene 10 s. Mide cuánto tarda cargar tus archivos.
+- En la liga se lee en `preparar`, que tiene 20 s. Mide cuánto tarda cargar tus archivos.
 
 ```python
 import numpy as np

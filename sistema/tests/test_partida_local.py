@@ -52,6 +52,8 @@ def test_fiel_contra_fiel_termina():
     # El estado final reconstruido coincide con los puntos reportados.
     assert proyeccion(r)[1]["puntos"] == r.puntos
     assert any(j["combate"] for j in r.jugadas)
+    assert set(r.preparar_usado) == {"blancas", "negras"}
+    assert all(0 <= t < LIMITES.preparar_s for t in r.preparar_usado.values())
 
 
 def test_misma_semilla_misma_partida():
@@ -109,6 +111,7 @@ def test_import_lento_pierde_por_preparar():
 def test_preparar_lento_pierde_por_preparar():
     r = partida("fiel", "preparar_lento")
     assert (r.ganador, r.motivo) == ("blancas", "preparar")
+    assert r.preparar_usado["negras"] >= LIMITES.preparar_s
 
 
 def test_spam_se_recorta_y_escapa():

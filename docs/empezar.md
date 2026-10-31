@@ -249,8 +249,8 @@ jugar.
    verás algo así:
 
    ```text
-   #  Blancas        Negras         Ganador        Puntos  Jugadas   Reloj máx
-   1  los_alfa_beta  montecarlo     montecarlo        0–3       60  14.6 s (N)
+   #  Blancas        Negras         Ganador        Puntos  Jugadas   Reloj máx  Preparar máx
+   1  los_alfa_beta  montecarlo     montecarlo        0–3       60  14.6 s (N)     2.5 s (N)
    ...
    Resultado: montecarlo 2 – 2 los_alfa_beta
    Repeticiones: …/resultados/2026-10-20_17-03-11/index.html  (ábrelo en tu navegador)
@@ -397,7 +397,7 @@ Agrega `--sin-docker` a cualquier comando (en Codespaces se agrega solo):
 La primera vez prepara [`.venv/`](#el-entorno-de-python-venv) solo (unos minutos). Si agregas un
 `requirements.txt` a tu carpeta, corre `./torneo instalar` para instalarlo en `.venv/`.
 
-Sin Docker **cuentan el reloj (30 s) y `preparar` (10 s)**, pero **no hay límite de memoria ni de
+Sin Docker **cuentan el reloj (30 s) y `preparar` (20 s)**, pero **no hay límite de memoria ni de
 CPU ni aislamiento**. Antes de confiar en un resultado, pruébalo con Docker o en GitHub.
 
 No funciona en Mac con procesador Intel (numba no existe ahí sin Docker): usa Docker o Codespaces.

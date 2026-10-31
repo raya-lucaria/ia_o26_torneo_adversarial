@@ -70,7 +70,8 @@ def test_jugar_sin_docker_imprime_tabla(capsys, tmp_path):
     out = capsys.readouterr().out
     assert codigo == 0
     assert "sin Docker" in out and "sin aislamiento" in out
-    assert re.search(r"#\s+Blancas\s+Negras\s+Ganador\s+Puntos\s+Jugadas\s+Reloj máx", out)
+    encabezado = r"#\s+Blancas\s+Negras\s+Ganador\s+Puntos\s+Jugadas\s+Reloj máx\s+Preparar máx"
+    assert re.search(encabezado, out)
     assert re.search(r"^\s*1\s+random\s+montecarlo\s", out, re.MULTILINE)
     assert re.search(r"^\s*2\s+montecarlo\s+random\s", out, re.MULTILINE)
     assert "Resultado:" in out
@@ -126,6 +127,23 @@ def test_reloj_cerca_del_limite_avisa():
     assert avisos == [
         "⚠ partida 3: lento usó 28.5 de 30 s de reloj (95 %). Está cerca de perder por reloj."
     ]
+
+
+def test_tabla_muestra_preparar_max():
+    registro = {
+        "meta": {"blancas": "lento", "negras": "random", "pareja": 0, "juego": 0},
+        "jugadas": [],
+        "ganador": "blancas",
+        "motivo": "puntos",
+        "puntos": {"blancas": 3, "negras": 0},
+        "reloj_usado": {"blancas": 21.3, "negras": 0.1},
+        "preparar_usado": {"blancas": 0.2, "negras": 4.6},
+        "salidas": {"blancas": "", "negras": ""},
+    }
+    tabla = salida.TablaPartidas(["lento", "random"], 1)
+    assert re.search(r"21\.3 s \(B\)\s+4\.6 s \(N\)$", tabla.fila(1, registro))
+    del registro["preparar_usado"]  # registros viejos
+    assert re.search(r"21\.3 s \(B\)\s+—$", tabla.fila(1, registro))
 
 
 def test_jugador_inexistente_es_error_claro(capsys):
@@ -688,6 +706,7 @@ def test_v_marca_la_jugada_que_anota(monkeypatch):
     lineas = salida.lineas_jugadas(_registro_minimo(jugadas))
     assert "★ anota (1–0)" in lineas[1]
     assert "★" not in lineas[2]
+
 
 def test_actualizar_trae_todo_lo_del_curso():
     # Todo lo rastreado fuera de estudiantes/<equipo>/ es del curso: `./torneo actualizar` debe

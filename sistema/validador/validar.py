@@ -28,6 +28,8 @@ INFORME_EJEMPLO = RAIZ / "estudiantes" / "montecarlo" / "INFORME.md"
 RIVAL_HUMO = RAIZ / "estudiantes" / "random"
 IMAGEN_RIVAL = "torneo-bot-base:local"  # random no tiene requirements.txt
 SEMILLA_HUMO = 2026
+# Avisar si `preparar` usó más de esta fracción de su límite: en la liga puede tardar más.
+AVISO_PREPARAR = 0.5
 
 # Motivos de derrota en el humo que indican un bot roto (no solo un bot débil).
 _MOTIVOS_ROTOS = {
@@ -379,11 +381,13 @@ def _jugar_humo(
 ) -> bool:
     """2 partidas contra random (una de cada color). Un bot roto es error.
 
+    Si `preparar` pasa de `AVISO_PREPARAR` de su límite, es aviso (deja margen).
     Regresa True si se jugaron sin fallas de infraestructura.
     """
     # Reloj corto para que sea rápido; `preparar` con el límite real (es justo).
     publicos = replace(limites, reloj_s=min(limites.reloj_s, limites_prueba().reloj_s))
     jugado = True
+    preparar_max = 0.0
     for juego, color in enumerate(COLORES):
         propio = _bot(carpeta, f"torneo-bot:{nombre}", publicos, docker)
         rival = _bot(RIVAL_HUMO, IMAGEN_RIVAL, publicos, docker)
@@ -404,6 +408,7 @@ def _jugar_humo(
             )
             jugado = False
             continue
+        preparar_max = max(preparar_max, r.preparar_usado.get(color, 0.0))
         if r.ganador == color:
             continue
         if r.motivo in _MOTIVOS_ROTOS:
@@ -419,4 +424,15 @@ def _jugar_humo(
                 f"{partida}: se quedó sin reloj (con {publicos.reloj_s:g} s de prueba). "
                 "Revisa que tu bot use tiempo_restante para repartir el tiempo."
             )
+    if preparar_max > AVISO_PREPARAR * publicos.preparar_s:
+        avisos.append(aviso_preparar(preparar_max, publicos.preparar_s))
     return jugado
+
+
+def aviso_preparar(usado: float, limite: float) -> str:
+    """Aviso de `preparar` lento (sin ⚠: lo pone quien lo imprime)."""
+    return (
+        f"Tu preparar tardó {usado:.1f} s de {limite:g}. En la liga los runners de GitHub "
+        "pueden ser hasta ~2,5× más lentos al compilar numba: deja margen. Ver "
+        "docs/avanzado.md#numba-que-compila-rápido"
+    )

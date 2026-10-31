@@ -34,7 +34,7 @@ tiene nada que ver con los dados. Intentar adivinarlos o manipularlos es trampa.
 ### ¿Qué pasa si mi bot se pasa del reloj, lanza un error o regresa una jugada ilegal?
 
 Pierde **esa** partida y sigue en la liga. Lo mismo si se pasa de memoria o si `preparar` tarda más
-de 10 s. Ver [docs/probar.md](probar.md#cómo-depurar).
+de 20 s. Ver [docs/probar.md](probar.md#cómo-depurar).
 
 ### `./torneo` tarda mucho la primera vez. ¿Es normal?
 
@@ -164,6 +164,13 @@ datos de otro equipo, no: es trampa, aunque te lo hayan pasado.
 ### ¿Podemos ser 3? ¿Puedo trabajar solo?
 
 Los equipos son de exactamente 2. Otro número solo con permiso del profesor.
+
+### ¿Cuándo es la entrega?
+
+Hay una sola hora límite: **lunes 9 de noviembre de 2026, 10:00, hora de la Ciudad de México (UTC−6)**. Antes de esa hora
+registras el SHA de tu commit final y abres tu pull request con tu carpeta exactamente como en ese
+SHA (registra primero y abre el PR enseguida). Después de esa hora no se acepta nada: ni registro,
+ni PR, ni cambios. Pasos en [docs/entregar.md](entregar.md).
 
 ### ¿Los demás pueden ver mi código?
 

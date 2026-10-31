@@ -2,7 +2,7 @@
 # Cada bot corre además con 1 núcleo de CPU.
 
 reloj_s = 30.0          # reloj total de tu bot por partida, en segundos
-preparar_s = 10.0       # tiempo máximo de `preparar` (incluye importar strategy.py)
+preparar_s = 20.0       # tiempo máximo de `preparar` (incluye importar strategy.py)
 memoria_mb = 1024       # memoria máxima del contenedor de tu bot
 carpeta_mb = 100        # tamaño máximo de tu carpeta en estudiantes/
 archivo_mb = 50         # tamaño máximo de cada archivo

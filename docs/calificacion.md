@@ -8,7 +8,9 @@
 - **Todos contra todos.** Contra cada participante juegas **4 partidas**: 2 juegos de dados × 2
   colores (ver [docs/reglas.md](reglas.md#los-dados)).
 - **Victoria = 1 punto**, derrota = 0. No hay empates.
-- La liga oficial corre en GitHub después de cerrar las entregas. Los dados se generan con una
+- La liga oficial corre en GitHub después de cerrar las entregas (hora límite: lunes 9 de
+  noviembre de 2026, 10:00, hora de la Ciudad de México, UTC−6; ver
+  [docs/entregar.md](entregar.md)). Los dados se generan con una
   semilla nueva al lanzarla, y la semilla se publica al terminar: cualquiera puede repetir cada
   partida.
 - Los resultados se publican: tabla, calificación por equipo (con el nombre del equipo, sin

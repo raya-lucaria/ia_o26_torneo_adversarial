@@ -136,6 +136,7 @@ def test_registro_v1():
         "motivo",
         "puntos",
         "reloj_usado",
+        "preparar_usado",
         "salidas",
     }
     assert set(d["jugadas"][0]) == {"n", "color", "jugada", "combate", "tiempo", "reloj", "info"}

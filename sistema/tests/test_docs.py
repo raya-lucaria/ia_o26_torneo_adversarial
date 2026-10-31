@@ -68,7 +68,7 @@ def test_sincronizar_marcadores_mal_puestos_son_error(malo):
 
 def test_tablas_tienen_los_valores_del_toml():
     limites = sincronizar_docs.tabla_limites()
-    for valor in ("30 s", "10 s", "1 núcleo", "1024 MB", "100 MB", "50 MB", "64 KB", "300 MB"):
+    for valor in ("30 s", "20 s", "1 núcleo", "1024 MB", "100 MB", "50 MB", "64 KB", "300 MB"):
         assert valor in limites
     assert "escala" not in limites.lower()
     notas = sincronizar_docs.tabla_calificacion()

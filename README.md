@@ -34,7 +34,9 @@ Reglas completas, con ejemplos resueltos: [docs/reglas.md](docs/reglas.md).
 > **Trabaja en un repo privado.** Un *fork* de un repo público es público: cualquiera vería tu
 > código. Crea tu repo con «Use this template» y márcalo **Private**. No compartas código ni
 > `data/` con otros equipos. El *fork* y el *pull request* se hacen **solo** el día de la entrega.
-> **Fechas: por definirse** (las anunciará el profesor); ver [docs/entregar.md](docs/entregar.md).
+> **Hora límite de la entrega: lunes 9 de noviembre de 2026, 10:00, hora de la Ciudad de México (UTC−6).** Antes de esa hora
+> registras el SHA de tu commit final y abres tu PR; después no se acepta nada. Ver
+> [docs/entregar.md](docs/entregar.md).
 
 1. **Crea tu repo privado.** Arriba en esta página: **Use this template → Create a new
    repository**, elige **Private** y clónalo en tu computadora (o ábrelo en Codespaces).
@@ -86,7 +88,7 @@ Tu bot se reduce a dos funciones en `strategy.py`:
 from motor import Estado, Jugada
 
 def preparar(config):
-    """Una vez por partida, antes de empezar (10 s, fuera del reloj).
+    """Una vez por partida, antes de empezar (20 s, fuera del reloj).
     config.color ("blancas" o "negras"), config.carpeta_datos (tu data/),
     config.semilla (para tu propio azar), config.reloj_s (30)."""
 
@@ -152,7 +154,7 @@ Sin `INFORME.md` completo o sin `equipo.toml` válido, tu PR no se acepta y no t
 | Recurso | Límite |
 |---|---|
 | Reloj | 30 s por partida, estilo ajedrez: solo corre en tu turno |
-| `preparar` (incluye importar `strategy.py`) | 10 s, fuera del reloj |
+| `preparar` (incluye importar `strategy.py`) | 20 s, fuera del reloj |
 | CPU | 1 núcleo |
 | Memoria | 1024 MB |
 | Tu carpeta | 100 MB en total y 50 MB por archivo |
@@ -161,7 +163,7 @@ Sin `INFORME.md` completo o sin `equipo.toml` válido, tu PR no se acepta y no t
 <!-- limites:fin -->
 
 - **Pierdes esa partida** (y sigues en la liga) si se acaba tu reloj, regresas una jugada ilegal,
-  lanzas una excepción, te pasas de memoria o `preparar` tarda más de 10 s.
+  lanzas una excepción, te pasas de memoria o `preparar` tarda más de 20 s.
 - **Prohibido:** redes neuronales, código ofuscado, código nativo propio (C, Cython, `.so`),
   salir del aislamiento, adivinar o manipular los dados, copiar o compartir código o datos con otro
   equipo, ponerse de acuerdo con otro equipo. Lista completa en

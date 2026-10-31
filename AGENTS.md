@@ -39,7 +39,7 @@ Todo se corre con `./torneo` desde la raíz del repo. Si algo falla, **empieza s
   Docker o Codespaces.
 - Otros comandos: `./torneo validar <su_equipo>`, `./torneo mini <su_equipo>`, `./torneo --help`.
   Guía completa: `docs/probar.md`.
-- Sin Docker cuentan el reloj (30 s por partida) y `preparar` (10 s), pero no la memoria ni la CPU.
+- Sin Docker cuentan el reloj (30 s por partida) y `preparar` (20 s), pero no la memoria ni la CPU.
   Lo oficial es con Docker o la prueba de GitHub Actions (cada *push* a `main` que cambie
   `estudiantes/`).
 
@@ -49,6 +49,9 @@ Todo se corre con `./torneo` desde la raíz del repo. Si algo falla, **empieza s
   la prueba de GitHub solo corre ahí).
 - Traer lo del compañero: `git pull`. Correcciones del curso: `./torneo actualizar` y luego
   `git push` (nunca toca la carpeta del equipo; ver `docs/preguntas.md`).
+- Entrega: una sola hora límite, **lunes 9 de noviembre de 2026, 10:00, hora de la Ciudad de
+  México (UTC−6)**. Antes de esa hora: registrar el SHA del commit final y, enseguida, abrir el PR
+  con la carpeta exactamente como en ese SHA. Después no se acepta nada. Pasos: `docs/entregar.md`.
 
 ## Reglas que no puedes romper (o el equipo saca 0)
 

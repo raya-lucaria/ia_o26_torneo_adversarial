@@ -14,7 +14,7 @@ from config import (
 
 LIMITES_ESCALADOS = """
 reloj_s = 30.0
-preparar_s = 10.0
+preparar_s = 20.0
 memoria_mb = 1024
 carpeta_mb = 100
 archivo_mb = 50
@@ -33,7 +33,7 @@ def toml_escalado(tmp_path: Path) -> Path:
 
 def test_limites_publicos() -> None:
     lim = cargar_limites()
-    assert (lim.reloj_s, lim.preparar_s, lim.memoria_mb, lim.escala_limites) == (30, 10, 1024, 1.0)
+    assert (lim.reloj_s, lim.preparar_s, lim.memoria_mb, lim.escala_limites) == (30, 20, 1024, 1.0)
     tamanos = (lim.carpeta_mb, lim.archivo_mb, lim.salida_kb, lim.requirements_mb)
     assert tamanos == (100, 50, 64, 300)
 
@@ -44,7 +44,7 @@ def test_escala_multiplica_reloj_y_memoria(toml_escalado: Path) -> None:
 
 
 def test_escala_no_toca_preparar(toml_escalado: Path) -> None:
-    assert cargar_limites(toml_escalado).efectivos().preparar_s == 10
+    assert cargar_limites(toml_escalado).efectivos().preparar_s == 20
 
 
 def test_variable_de_entorno_sobreescribe(

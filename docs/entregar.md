@@ -1,18 +1,21 @@
 # Entregar
 
 > [!IMPORTANT]
-> **Fechas: por definirse** (las anunciará el profesor): la hora límite para registrar el SHA,
-> el plazo del PR y dónde registrarlo.
+> **Hora límite: lunes 9 de noviembre de 2026, 10:00, hora de la Ciudad de México (UTC−6).** Es la única hora límite de la
+> entrega. Antes de esa hora debes **(1) registrar el SHA** de tu commit final y **(2) abrir tu
+> pull request** con tu carpeta exactamente como en ese SHA. **Después de esa hora no se acepta
+> nada:** ni registro, ni PR, ni cambios.
 
-La entrega tiene **dos momentos**:
+La entrega tiene **dos pasos, los dos antes de la hora límite**:
 
-1. **Antes de la hora límite:** registras el SHA del último commit de tu repo privado. Tu código
-   sigue privado.
-2. **En las 24 horas siguientes:** haces un *fork* del repo del torneo, copias tu carpeta
-   **exactamente** como estaba en ese SHA y abres un *pull request* (PR).
+1. **Primero registras el SHA** del último commit de tu repo privado. Tu código sigue privado.
+2. **Enseguida** haces un *fork* del repo del torneo, copias tu carpeta **exactamente** como estaba
+   en ese SHA y abres un *pull request* (PR).
 
-Así nadie puede ver código ajeno antes de la hora límite, y nadie puede cambiar su bot después.
-**Fechas: por definirse** (las anunciará el profesor).
+Haz los dos pasos con tiempo y en ese orden: registra el SHA primero y abre el PR enseguida, no
+lo dejes para el último minuto. El SHA registrado fija tu bot: tu PR debe coincidir con él, así que
+nadie puede cambiar su bot después de registrarlo. Copiar código de un PR ajeno es copiar código de
+otro equipo, y eso es trampa ([docs/calificacion.md](calificacion.md#qué-es-trampa)).
 
 > [!IMPORTANT]
 > **Tu pull request solo puede cambiar archivos dentro de tu carpeta,
@@ -98,15 +101,15 @@ solo muestran un aviso ⚠ si todavía tiene texto del ejemplo o es casi una cop
    ```
 
    También lo ves en GitHub: pestaña **Commits** de tu repo, botón para copiar el SHA completo.
-4. **Registra el SHA antes de la hora límite** donde indique el profesor, con el nombre de tu
-   equipo y el enlace a tu repo privado. **Fechas: por definirse** (las anunciará el profesor,
-   junto con dónde registrar el SHA).
+4. **Registra el SHA antes de la hora límite** (**lunes 9 de noviembre de 2026, 10:00, hora de la Ciudad de México (UTC−6)**) donde indique
+   el profesor, con el nombre de tu equipo y el enlace a tu repo privado.
 5. **Comprueba que el profesor (`uumami`) tiene acceso a tu repo privado** (Settings →
    Collaborators). Lo usa para comparar tu PR con el SHA registrado.
 
-Después de registrar, no cambies nada: lo que cuenta es ese SHA.
+Después de registrar, no cambies nada: lo que cuenta es ese SHA. Y abre tu PR enseguida (abajo):
+también tiene que estar abierto antes de la hora límite.
 
-## En las 24 horas siguientes: fork y pull request
+## Enseguida, antes de la hora límite: fork y pull request
 
 Hazlo desde la carpeta que **contiene** tu repo privado (en el ejemplo, tu repo se llama
 `tu_repo`). Cambia `los_alfa_beta` por tu equipo y `<SHA>` por el que registraste.
@@ -148,7 +151,8 @@ Hazlo desde la carpeta que **contiene** tu repo privado (en el ejemplo, tu repo 
 4. En la página del PR, espera a que termine la revisión automática `revisar-entrega`. Si sale en
    rojo, abre el detalle: dice qué falla.
 
-Un PR cuyo contenido no coincide con el SHA registrado se rechaza.
+Un PR cuyo contenido no coincide con el SHA registrado se rechaza, y un PR abierto después de la
+hora límite no se acepta.
 
 ## Qué revisa el validador
 

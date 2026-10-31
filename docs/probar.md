@@ -87,11 +87,11 @@ más partidas:
 
 ```text
 Partidas: los_alfa_beta vs montecarlo · 4 partidas · semilla 81723
-Reloj: 30 s por partida para cada bot · preparar: 10 s · con Docker
+Reloj: 30 s por partida para cada bot · preparar: 20 s · con Docker
 
-#  Blancas        Negras         Ganador        Puntos  Jugadas   Reloj máx
-1  los_alfa_beta  montecarlo     los_alfa_beta     3–1       77  21.3 s (B)
-2  montecarlo     los_alfa_beta  montecarlo        3–0       64  28.1 s (N)
+#  Blancas        Negras         Ganador        Puntos  Jugadas   Reloj máx  Preparar máx
+1  los_alfa_beta  montecarlo     los_alfa_beta     3–1       77  21.3 s (B)     2.4 s (B)
+2  montecarlo     los_alfa_beta  montecarlo        3–0       64  28.1 s (N)     2.6 s (N)
 ...
 ⚠ partida 2: los_alfa_beta usó 28.1 de 30 s
 Resultado: los_alfa_beta 3 – 1 montecarlo
@@ -101,6 +101,9 @@ Para repetir exactamente estas partidas: --semilla 81723
 
 - **Puntos:** puntos de Blancas–Negras al final de la partida.
 - **Reloj máx:** el mayor reloj que usó un bot en esa partida, y de qué color era (`B` o `N`).
+- **Preparar máx:** lo más que tardó un `preparar` en esa partida (límite 20 s, aparte del reloj).
+  En la liga puede tardar bastante más si compilas numba: ver
+  [docs/avanzado.md](avanzado.md#numba-que-compila-rápido).
 - **⚠:** tu bot usó más del 90 % de su reloj. En la liga, un poco más y pierdes.
 - **✗:** alguien perdió por algo que no es el juego (reloj, jugada ilegal, error, memoria,
   `preparar`). El mensaje dice qué pasó, en qué jugada y qué hacer, y muestra lo último que imprimió
@@ -201,7 +204,7 @@ Motivos de derrota y qué hacer:
 | ilegal | Regresaste algo que no está en `estado.jugadas()` | Regresa una `Jugada` de `estado.jugadas()` o su texto `"e2-e3"` |
 | error | Tu código lanzó una excepción o tu proceso se cerró | Lee el traceback que muestra el mensaje ✗ |
 | memoria | Pasaste de 1024 MB | Limita el tamaño de tus tablas y árboles |
-| preparar | `preparar` más la importación de `strategy.py` tardaron más de 10 s | Carga menos o más rápido; no hagas trabajo pesado al importar |
+| preparar | `preparar` más la importación de `strategy.py` tardaron más de 20 s | Carga menos o más rápido; no hagas trabajo pesado al importar |
 
 ## Pruebas en GitHub
 

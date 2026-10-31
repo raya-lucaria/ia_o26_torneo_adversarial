@@ -203,7 +203,7 @@ Los mismos en tu máquina (con `./torneo`) y en la liga:
 | Recurso | Límite |
 |---|---|
 | Reloj | 30 s por partida, estilo ajedrez: solo corre en tu turno |
-| `preparar` (incluye importar `strategy.py`) | 10 s, fuera del reloj |
+| `preparar` (incluye importar `strategy.py`) | 20 s, fuera del reloj |
 | CPU | 1 núcleo |
 | Memoria | 1024 MB |
 | Tu carpeta | 100 MB en total y 50 MB por archivo |
@@ -214,7 +214,7 @@ Los mismos en tu máquina (con `./torneo`) y en la liga:
 - **El reloj** es tuyo para toda la partida. Corre desde que el árbitro te manda el estado hasta que
   recibe tu jugada, así que incluye el pequeño tiempo de comunicación. `tiempo_restante` te dice
   cuánto te queda (nunca es negativo). No pienses hasta el último milisegundo: deja reserva.
-- **`preparar`** tiene 10 s aparte del reloj. Cuenta también el tiempo de importar tu
+- **`preparar`** tiene 20 s aparte del reloj. Cuenta también el tiempo de importar tu
   `strategy.py`: lo que hagas a nivel de módulo (cargar archivos, compilar con numba) cuenta ahí.
 - Lo que imprimas con `print` no rompe nada: se guarda aparte y lo ves con `-v` y en el visor.
 
@@ -224,7 +224,7 @@ Los mismos en tu máquina (con `./torneo`) y en la liga:
 - regresas una jugada ilegal o mal formada;
 - tu código lanza una excepción;
 - tu proceso muere (por ejemplo, por pasarte de memoria);
-- `preparar` (con la importación de `strategy.py`) tarda más de 10 s.
+- `preparar` (con la importación de `strategy.py`) tarda más de 20 s.
 
 Sigues en la liga y juegas tus demás partidas. Si la falla es **nuestra** (la máquina, Docker, el
 árbitro), la pareja completa se vuelve a jugar con los mismos dados y no cuenta como derrota.

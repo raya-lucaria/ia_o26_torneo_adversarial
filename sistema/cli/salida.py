@@ -96,12 +96,21 @@ class TablaPartidas:
     Los anchos se fijan desde el principio con los nombres de los equipos.
     """
 
-    ENCABEZADO = ("#", "Blancas", "Negras", "Ganador", "Puntos", "Jugadas", "Reloj máx")
-    DERECHA = frozenset({0, 4, 5, 6})
+    ENCABEZADO = (
+        "#",
+        "Blancas",
+        "Negras",
+        "Ganador",
+        "Puntos",
+        "Jugadas",
+        "Reloj máx",
+        "Preparar máx",
+    )
+    DERECHA = frozenset({0, 4, 5, 6, 7})
 
     def __init__(self, nombres: list[str], partidas: int) -> None:
         nombre = max([len(n) for n in nombres] + [7])
-        self.anchos = [max(1, len(str(partidas))), nombre, nombre, nombre, 6, 7, 10]
+        self.anchos = [max(1, len(str(partidas))), nombre, nombre, nombre, 6, 7, 10, 12]
 
     def _linea(self, celdas: list[str]) -> str:
         return "  ".join(
@@ -123,9 +132,6 @@ class TablaPartidas:
         else:
             texto, nota = "—", "  (no contó: falla de infraestructura)"
         puntos = registro["puntos"]
-        reloj = registro.get("reloj_usado") or {}
-        color_max = max(COLORES, key=lambda c: reloj.get(c, 0.0))
-        maximo = f"{_segundos(reloj.get(color_max, 0.0))} ({LETRA[color_max]})"
         linea = self._linea(
             [
                 str(n),
@@ -134,10 +140,20 @@ class TablaPartidas:
                 texto,
                 f"{puntos.get('blancas', 0)}–{puntos.get('negras', 0)}",
                 str(len(registro["jugadas"])),
-                maximo,
+                _maximo(registro.get("reloj_usado")),
+                _maximo(registro.get("preparar_usado")),
             ]
         )
         return linea + nota
+
+
+def _maximo(por_color: dict | None) -> str:
+    """«21.3 s (B)»: el mayor de los dos colores y de quién es; «—» si no hay datos."""
+    por_color = por_color or {}
+    if not por_color:
+        return "—"
+    color = max(COLORES, key=lambda c: por_color.get(c, 0.0))
+    return f"{_segundos(por_color.get(color, 0.0))} ({LETRA[color]})"
 
 
 def resultado(registros: list[dict]) -> str:

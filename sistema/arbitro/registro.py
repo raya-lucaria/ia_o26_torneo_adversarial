@@ -5,7 +5,9 @@ Formato v1 (`a_json`):
      "meta": {"blancas", "negras", "pareja", "juego", "semilla_maestra"},
      "jugadas": [{"n", "color", "jugada", "combate": {"p", "u", "gano"} | null,
                   "tiempo", "reloj", "info"}],
-     "ganador", "motivo", "puntos", "reloj_usado", "salidas"}
+     "ganador", "motivo", "puntos", "reloj_usado", "preparar_usado", "salidas"}
+
+`preparar_usado` (segundos de `preparar` por color) puede faltar en registros viejos.
 """
 
 from __future__ import annotations
@@ -70,5 +72,6 @@ def a_json(r: ResultadoPartida, meta: dict) -> dict:
         "motivo": r.motivo,
         "puntos": dict(r.puntos),
         "reloj_usado": dict(r.reloj_usado),
+        "preparar_usado": dict(r.preparar_usado),
         "salidas": {color: escapar(texto) for color, texto in r.salidas.items()},
     }

@@ -44,6 +44,7 @@ class ResultadoPartida:
     puntos: dict[str, int]
     jugadas: list[dict] = field(default_factory=list)
     reloj_usado: dict[str, float] = field(default_factory=dict)
+    preparar_usado: dict[str, float] = field(default_factory=dict)  # segundos de `preparar`
     salidas: dict[str, str] = field(default_factory=dict)
     falla_infraestructura: bool = False
 
@@ -103,6 +104,7 @@ class _Arbitro:
         self.estado = Estado.inicial()
         self.jugadas: list[dict] = []
         self.usado = dict.fromkeys(COLORES, 0.0)
+        self.preparar_usado: dict[str, float] = {}
         self.notas: dict[str, list[str]] = {c: [] for c in COLORES}
         self.observador: Observador | None = observador
 
@@ -142,6 +144,7 @@ class _Arbitro:
             limite,
             invalido=("error", "[árbitro] Tu bot mandó un mensaje inválido durante preparar."),
         )
+        self.preparar_usado[color] = transcurrido
         if transcurrido > limite or mensaje is None:
             motivo = self._causa(bot, transcurrido, limite)
             if motivo == "reloj":
@@ -402,6 +405,7 @@ def jugar_partida(
         puntos=a.estado.puntos,
         jugadas=a.jugadas,
         reloj_usado=dict(a.usado),
+        preparar_usado=dict(a.preparar_usado),
         salidas={c: a.salida_final(c) for c in COLORES},
         falla_infraestructura=falla,
     )
