@@ -191,7 +191,8 @@ El profesor decide cada caso marcado antes de poner un 0.
 
 ## Si algo técnico falla
 
-Si tu entrega tiene un error técnico (por ejemplo, el validador falla por un archivo de más), tienes
-**una sola corrección**, dentro de las 24 horas siguientes al aviso, con el **cambio mínimo** para
+Después de la hora límite no se acepta nada por iniciativa tuya. Solo si **el profesor te avisa** que
+tu entrega tiene un error técnico (por ejemplo, el validador falla por un archivo de más), tienes
+**una sola corrección**, dentro de las 24 horas siguientes a ese aviso, con el **cambio mínimo** para
 arreglarlo. Se revisa a mano. No se aceptan cambios de estrategia. Si sigue fallando, tu bot no
 entra a la liga (calificación 0).
