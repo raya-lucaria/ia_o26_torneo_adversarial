@@ -1,0 +1,3 @@
+# Librerías extra que tu bot necesita en la liga. Este archivo es OPCIONAL.
+# Una por línea, con versión exacta: paquete==versión   (por ejemplo: scipy==1.13.0)
+# numpy, scipy y numba ya vienen instaladas; no hace falta ponerlas aquí.
