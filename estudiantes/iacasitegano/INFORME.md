@@ -9,47 +9,13 @@ El bot busca con expectiminimax exacto (usa la probabilidad real de combate del 
 
 ## 3. Búsqueda (algoritmo y por qué)
 
-`busqueda_eval3.py`: expectiminimax exacto compilado con Numba sobre el
-tablero crudo, no sobre objetos `Estado`, porque Python puro a profundidad
-3–4 es demasiado lento para competir con `montecarlo`. En los nodos de
-azar (hasta dos ramas: éxito/fracaso del ataque, con su probabilidad real)
-la poda Star1 acota el mejor/peor caso con la utilidad terminal
-(`GANANCIA=1.0`) y corta la segunda rama si ese caso ya cae fuera de la
-ventana alfa-beta.
+`busqueda_eval3.py`: expectiminimax exacto compilado con Numba sobre el tablero crudo (no sobre objetos `Estado`), porque Python puro a profundidad 3-4 es demasiado lento para competir con `montecarlo`. En los nodos de azar (dos ramas: éxito o fracaso del ataque, con su probabilidad real) la poda Star1 acota el mejor y el peor caso con la utilidad terminal y corta la segunda rama si ese caso ya cae fuera de la ventana alfa-beta.
 
-Profundización iterativa **anytime** (`elegir`, en `busqueda_eval3.py`):
-antes de intentar una profundidad nueva solo revisa si queda reloj
-(`limite_tiempo`, fijado por `strategy.jugar`, ver sección 6); si queda,
-calcula un **tope de nodos** para esa profundidad a partir de los
-nodos/segundo REALES medidos en la última profundidad que sí terminó
-completa y el tiempo real que falta (`tope = nodos_por_segundo ×
-tiempo_restante × FRACCION_TOPE`, con `FRACCION_TOPE=0.8` y un piso de
-`TOPE_MINIMO=20 000` nodos). La primera profundidad no tiene medición
-todavía, así que corre con un tope fijo y generoso
-(`TOPE_PRIMERA_PROFUNDIDAD=2 000 000`) que en la práctica nunca se agota —
-eso garantiza siempre una jugada de respaldo. El buscador cuenta nodos
-visitados y, si pasa ese tope a MEDIA profundidad, aborta: si ya había al
-menos otras dos jugadas de la raíz completamente evaluadas a esa
-profundidad, toma la mejor de esas pocas como resultado parcial; si no,
-descarta el intento y conserva la última profundidad **completa**. En
-ningún caso se reporta como alcanzada una profundidad que no terminó.
-Dos constantes de una versión anterior, `FACTOR_PESIMISTA` y
-`MARGEN_SEGURIDAD` (que decidían con un factor fijo si la siguiente
-profundidad completa iba a caber, antes de intentarla), ya no se usan:
-quedan en el código solo como comentario histórico, no las lee ninguna
-función.
+Profundización iterativa *anytime* (`elegir`): antes de intentar una profundidad nueva solo revisa si queda reloj (`limite_tiempo`, fijado por `strategy.jugar`, sección 6). Si queda, calcula un **tope de nodos** con los nodos por segundo reales medidos en la última profundidad completa (`tope = nodos_por_segundo × tiempo_restante × 0.8`, piso de 20 000 nodos). La primera profundidad corre con un tope muy alto que en la práctica no se agota, así que siempre hay jugada de respaldo. Si el tope se pasa a media profundidad, la búsqueda aborta: usa el resultado parcial solo si ya había al menos otras dos jugadas de la raíz evaluadas a esa profundidad; si no, conserva la última profundidad **completa**. Nunca se reporta como alcanzada una profundidad que no terminó.
 
-Tabla de transposición: arreglo fijo de NumPy (hash Zobrist XOR
-profundidad, reemplaza siempre en colisión), que solo guarda un valor como
-exacto si el ciclo terminó sin corte propio **y** el resultado cae dentro
-de la ventana alfa-beta de entrada del nodo — corrección sobre una versión
-anterior que guardaba exacto con solo terminar el ciclo, reproducida con
-±210.20 contra ≈0 esperado en un caso de prueba.
+Tabla de transposición: arreglo fijo de NumPy (hash Zobrist XOR profundidad, reemplaza siempre en colisión) que guarda un valor como exacto solo si el ciclo terminó sin corte propio **y** el resultado cae dentro de la ventana alfa-beta de entrada del nodo (corrección sobre una versión anterior que lo guardaba con solo terminar el ciclo).
 
-Ordenamiento de jugadas (barato, calculado en Numba): heurístico y lexicográfico (victoria inmediata,
-ataque que anota, probabilidad del ataque, bloqueo de amenaza rival),
-nunca cambia el valor minimax. Quiescencia apagada (`QUIESCENCIA_MAX=0`):
-medida contra alfa-beta real, no compensó su costo.
+Ordenamiento de jugadas: barato, heurístico y calculado en Numba (llegada a la meta, ataque con su probabilidad, avance); no cambia el valor minimax. Quiescencia apagada (`QUIESCENCIA_MAX=0`): medida contra alfa-beta real, no compensó su costo.
 
 ## 4. Función de evaluación
 
@@ -71,22 +37,21 @@ De los 30 s por partida, `strategy.py` reserva `RESERVA=0.135` (≈4 s) que nunc
 
 **Contra `montecarlo`, bajo el árbitro oficial (Docker, colores alternados, semillas distintas por campaña):** tres campañas independientes de 80 partidas dieron **60/80, 58/80 y 55/80, en total 173/240 (72.1 %)**. Medimos con la misma metodología el bot anterior (F, sin el reajuste por búsqueda profunda): 134/240 (55.8 %). Una covariable de "suerte" de combate (balance neto de combates ganados por el dado) explica parte de la variación entre campañas, por eso comparamos por pares (misma semilla y color) y con intervalos de Wilson antes de decidir. Probamos además variantes (más reloj en finales de 2 puntos, desempate por riesgo, otras calibraciones) y ninguna superó a esta.
 
-**Contra `random`:** esta versión exacta no tiene una campaña propia de partidas oficiales contra `random`; el bot anterior ganó 100/100 con el mismo motor de búsqueda y evaluación del mismo tipo, y el validador oficial (`./torneo validar iacasitegano --entrega`) juega 2 partidas de prueba contra `random` con esta carpeta y pasa. No presentamos el 100/100 como resultado de esta versión.
+**Contra `random`, bajo el árbitro oficial (Docker, 30 s de reloj, 10 s de `preparar`, semilla 704200, colores alternados):** **20/20 (100 %)**, todas por 3 a 0. El reloj máximo usado por partida fue 22.3 s de 30 s. Esta campaña se corrió con la carpeta tal como se entrega.
 
 ## 8. Qué intentamos y no funcionó
 
-- **Pistas de la TT para ordenar nodos internos:** ahorro de tiempo de solo 1.7 % (se exigía <5 %); no se incorporó.
+- **Pistas de la TT para ordenar nodos internos:** ahorro de tiempo de solo 1.7 % (se exigía más de 5 %); no se incorporó.
 - **Poda Star2** en nodos de azar: correcta (2,000 posiciones sin diferencias contra expectiminimax exhaustivo) pero solo +0.032 niveles de profundidad media; se mantiene Star1.
-- **Híbrido con rollouts Monte Carlo:** mejoró en desarrollo (55 vs 49 victorias de 100) pero no en validación reservada (24 vs 29 de 40).
+- **Híbrido con rollouts Monte Carlo:** mejoró en desarrollo (55 vs 49 de 100) pero no en validación reservada (24 vs 29 de 40).
 - **Finales exactos y detector de carrera pura:** 0 activaciones en las poblaciones oficiales; no se integró.
-- **Reentrenamiento amplio, lote de reajuste de 256 episodios, entrenamiento con exploración épsilon-greedy:** rechazados por peor desempeño o peor retención histórica (el reentrenamiento amplio ganó 6/80 contra `montecarlo`; la exploración, 1/40 y 1/40).
+- **Reentrenamiento amplio, lote de reajuste de 256 episodios y entrenamiento con exploración épsilon-greedy:** rechazados por peor desempeño o peor retención (el reentrenamiento amplio ganó 6/80 contra `montecarlo`; la exploración, 1/40 y 1/40).
 - **Caché de Numba precompilada en `data/`:** retirada; el arranque frío es rápido y el curso la prohíbe como código nativo propio.
-- **Pesos S13 (13 coeficientes libres):** 41/80 (F) contra 44/80 (S13) pero una semilla en contra y sin llegar al margen exigido; rechazado.
-- **Extra de reloj en finales de 2 puntos (variante FGX, ×1.8 en posiciones decisivas):** no mejoró de forma sostenida en la campaña oficial; descartado.
-- **Desempate por riesgo en la raíz (variante FGAZ2):** tampoco mejoró; descartado.
-- **Calibración ajustada con partidas oficiales:** una versión previa ajustaba sesgo y turno con partidas contra `montecarlo`; la entregada deriva ambos de las etiquetas profundas (sesgo 0, turno 0.2691).
+- **Pesos S13 (13 coeficientes libres):** 44/80 contra 41/80 de la versión anterior, pero una semilla en contra y sin el margen exigido; rechazado.
+- **Tiempo extra en finales de 2 puntos (variante FGX, ×1.8 en posiciones decisivas) y desempate por riesgo en la raíz (FGAZ2):** ninguna mejoró de forma sostenida en campañas oficiales; descartadas.
+- **Calibración ajustada con partidas oficiales:** una versión previa ajustaba sesgo y turno con partidas contra `montecarlo`; la entregada deriva ambos de las etiquetas profundas.
 
-Chequeos de robustez del bot anterior (misma arquitectura) contra un rival de expectiminimax simple (156/160) y contra un rival UCT/MCTS propio (143/162) no mostraron un punto ciego.
+La versión anterior (misma arquitectura) no mostró puntos ciegos contra un rival de expectiminimax simple (156/160) ni contra un rival UCT/MCTS propio (143/162).
 
 ## 9. Fuentes y uso de IA
 
