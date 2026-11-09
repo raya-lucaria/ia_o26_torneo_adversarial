@@ -1,0 +1,293 @@
+diff --git a/estudiantes/frame_perfect_push/herramientas/resumir_resultados.py b/estudiantes/frame_perfect_push/herramientas/resumir_resultados.py
+index dc687ed..40ee10e 100644
+--- a/estudiantes/frame_perfect_push/herramientas/resumir_resultados.py
++++ b/estudiantes/frame_perfect_push/herramientas/resumir_resultados.py
+@@ -50,6 +50,19 @@ def resumir(carpeta, bot):
+                         ),
+                         default=0,
+                     ),
++                    "tt_hits": sum(
++                        (j.get("info") or {}).get("tt_hits", 0)
++                        for j in registro["jugadas"]
++                        if j["color"] == color
++                    ),
++                    "tt_size": max(
++                        (
++                            (j.get("info") or {}).get("tt_size", 0)
++                            for j in registro["jugadas"]
++                            if j["color"] == color
++                        ),
++                        default=0,
++                    ),
+                     "ilegales": int(fallo and registro.get("motivo") == "ilegal"),
+                     "otras_fallas": int(fallo and registro.get("motivo") != "ilegal"),
+                 }
+@@ -58,7 +71,7 @@ def resumir(carpeta, bot):
+     print(f"Bot: {bot}")
+     print(
+         "Color   W-L   puntos   jugadas_prom   prof_max   nps_max   reloj_max_s "
+-        " decision_max_s   ilegales   otras_fallas"
++        " decision_max_s   TT_hits   TT_size   ilegales   otras_fallas"
+     )
+     total = 0
+     for color in ("blancas", "negras"):
+@@ -74,11 +87,14 @@ def resumir(carpeta, bot):
+         decision = max(p["decision"] for p in partidas)
+         profundidad = max(p["profundidad"] for p in partidas)
+         nps = max(p["nps"] for p in partidas)
++        tt_hits = sum(p["tt_hits"] for p in partidas)
++        tt_size = max(p["tt_size"] for p in partidas)
+         ilegales = sum(p["ilegales"] for p in partidas)
+         otras = sum(p["otras_fallas"] for p in partidas)
+         print(
+             f"{color:7} {ganadas:2}-{perdidas:<2} {puntos:7} {promedio:13.1f} "
+-            f"{profundidad:10} {nps:9} {reloj:12.3f} {decision:16.3f} {ilegales:9} {otras:13}"
++            f"{profundidad:10} {nps:9} {reloj:12.3f} {decision:16.3f} "
++            f"{tt_hits:8} {tt_size:9} {ilegales:9} {otras:13}"
+         )
+     print(f"Total de partidas resumidas: {total}")
+     return total
+diff --git a/estudiantes/frame_perfect_push/strategy.py b/estudiantes/frame_perfect_push/strategy.py
+index 0433fab..b8023f9 100644
+--- a/estudiantes/frame_perfect_push/strategy.py
++++ b/estudiantes/frame_perfect_push/strategy.py
+@@ -22,6 +22,11 @@ NODOS_MAXIMOS = 2400
+ REVISION_NODOS = 4
+ PRESUPUESTO_MAXIMO = 0.30
+ RESERVA_RELOJ = 1.5
++TT_MAX_ENTRIES = 16000
++TT_EXACT = "EXACT"
++TT_LOWER = "LOWER"
++TT_UPPER = "UPPER"
++_TT = {}
+ 
+ 
+ class _BusquedaDetenida(Exception):
+@@ -29,6 +34,7 @@ class _BusquedaDetenida(Exception):
+ 
+ 
+ def preparar(config):
++    _TT.clear()
+     return None
+ 
+ 
+@@ -180,17 +186,67 @@ def _valor_terminal(ganador, perspectiva, distancia):
+     return -VALOR_TERMINAL + distancia
+ 
+ 
++def _clave_tt(estado, perspectiva, distancia):
++    puntos = estado.puntos
++    return (
++        tuple(estado.piezas("blancas")),
++        tuple(estado.piezas("negras")),
++        estado.turno,
++        puntos["blancas"],
++        puntos["negras"],
++        perspectiva,
++        distancia,
++    )
++
++
++def _guardar_tt(clave, profundidad, cota, valor, contexto):
++    anterior = _TT.get(clave)
++    if anterior is not None and (
++        anterior[0] > profundidad
++        or (anterior[0] == profundidad and anterior[1] == TT_EXACT and cota != TT_EXACT)
++    ):
++        return
++    if anterior is not None:
++        del _TT[clave]
++    elif len(_TT) >= TT_MAX_ENTRIES:
++        victima = min(_TT, key=lambda existente: _TT[existente][0])
++        del _TT[victima]
++    _TT[clave] = (profundidad, cota, valor)
++    contexto["tt_stores"] = contexto.get("tt_stores", 0) + 1
++
++
+ def _valor(estado, profundidad, contexto, distancia=0, alfa=-math.inf, beta=math.inf):
+     _revisar_recursos(contexto)
++    alfa_original, beta_original = alfa, beta
++    clave = _clave_tt(estado, contexto["perspectiva"], distancia)
++    contexto.setdefault("tt_hits", 0)
++    contexto.setdefault("tt_stores", 0)
++    entrada = _TT.get(clave)
++    if entrada is not None and entrada[0] >= profundidad:
++        _, cota, valor = entrada
++        if (
++            cota == TT_EXACT
++            or (cota == TT_LOWER and valor >= beta_original)
++            or (cota == TT_UPPER and valor <= alfa_original)
++        ):
++            contexto["tt_hits"] += 1
++            return valor
++
+     ganador = estado.ganador()
+     if ganador is not None:
+-        return _valor_terminal(ganador, contexto["perspectiva"], distancia)
++        valor = _valor_terminal(ganador, contexto["perspectiva"], distancia)
++        _guardar_tt(clave, profundidad, TT_EXACT, valor, contexto)
++        return valor
+     if profundidad == 0:
+-        return _evaluar(estado, contexto["perspectiva"])
++        valor = _evaluar(estado, contexto["perspectiva"])
++        _guardar_tt(clave, profundidad, TT_EXACT, valor, contexto)
++        return valor
+ 
+     jugadas = estado.jugadas()
+     if not jugadas:
+-        return -VALOR_TERMINAL if estado.turno == contexto["perspectiva"] else VALOR_TERMINAL
++        valor = -VALOR_TERMINAL if estado.turno == contexto["perspectiva"] else VALOR_TERMINAL
++        _guardar_tt(clave, profundidad, TT_EXACT, valor, contexto)
++        return valor
+ 
+     maximiza = estado.turno == contexto["perspectiva"]
+     mejor = -math.inf if maximiza else math.inf
+@@ -204,6 +260,13 @@ def _valor(estado, profundidad, contexto, distancia=0, alfa=-math.inf, beta=math
+             beta = min(beta, mejor)
+         if alfa >= beta:
+             break
++    if mejor <= alfa_original:
++        cota = TT_UPPER
++    elif mejor >= beta_original:
++        cota = TT_LOWER
++    else:
++        cota = TT_EXACT
++    _guardar_tt(clave, profundidad, cota, mejor, contexto)
+     return mejor
+ 
+ 
+@@ -242,6 +305,8 @@ def _buscar(estado, legales, tiempo_restante):
+     )
+     nodos = 0
+     nodos_azar = 0
++    tt_hits = 0
++    tt_stores = 0
+     profundidad_completa = 0
+     anterior = None
+ 
+@@ -256,6 +321,8 @@ def _buscar(estado, legales, tiempo_restante):
+             "limite": limite,
+             "nodos": nodos,
+             "azar": nodos_azar,
++            "tt_hits": 0,
++            "tt_stores": 0,
+             "perspectiva": perspectiva,
+         }
+         mejor_iteracion = legales[0]
+@@ -276,16 +343,28 @@ def _buscar(estado, legales, tiempo_restante):
+         except _BusquedaDetenida:
+             nodos = contexto["nodos"]
+             nodos_azar = contexto["azar"]
++            tt_hits += contexto["tt_hits"]
++            tt_stores += contexto["tt_stores"]
+             break
+         mejor_completa, mejor_valor = mejor_iteracion, valor_iteracion
+         anterior = mejor_iteracion
+         nodos = contexto["nodos"]
+         nodos_azar = contexto["azar"]
++        tt_hits += contexto["tt_hits"]
++        tt_stores += contexto["tt_stores"]
+         profundidad_completa = profundidad
+         if time.perf_counter() >= limite or nodos >= NODOS_MAXIMOS:
+             break
+ 
+-    return mejor_completa, mejor_valor, nodos, profundidad_completa, nodos_azar
++    return (
++        mejor_completa,
++        mejor_valor,
++        nodos,
++        profundidad_completa,
++        nodos_azar,
++        tt_hits,
++        tt_stores,
++    )
+ 
+ 
+ def jugar(estado, tiempo_restante):
+@@ -295,7 +374,7 @@ def jugar(estado, tiempo_restante):
+     respaldo = legales[0]
+     try:
+         inicio = time.perf_counter()
+-        mejor, valor, nodos, profundidad, nodos_azar = _buscar(
++        mejor, valor, nodos, profundidad, nodos_azar, tt_hits, tt_stores = _buscar(
+             estado, legales, tiempo_restante
+         )
+         decision_s = max(time.perf_counter() - inicio, 1e-9)
+@@ -306,6 +385,9 @@ def jugar(estado, tiempo_restante):
+             nps=int(nodos / decision_s),
+             decision_s=decision_s,
+             eval=valor,
++            tt_hits=tt_hits,
++            tt_stores=tt_stores,
++            tt_size=len(_TT),
+         )
+         return mejor if mejor in legales else respaldo
+     except Exception:
+diff --git a/estudiantes/frame_perfect_push/test_strategy.py b/estudiantes/frame_perfect_push/test_strategy.py
+index 9ce6965..864d2c9 100644
+--- a/estudiantes/frame_perfect_push/test_strategy.py
++++ b/estudiantes/frame_perfect_push/test_strategy.py
+@@ -71,6 +71,9 @@ class ReglasMotorTest(unittest.TestCase):
+ 
+ 
+ class EstrategiaTest(unittest.TestCase):
++    def setUp(self):
++        strategy._TT.clear()
++
+     def test_devuelve_respaldo_legal_con_reloj_agotado(self):
+         estado = Estado.inicial()
+         jugada = strategy.jugar(estado, 0.0)
+@@ -139,8 +142,53 @@ class EstrategiaTest(unittest.TestCase):
+         self.assertIn("prof", datos)
+         self.assertIn("nps", datos)
+         self.assertIn("decision_s", datos)
++        self.assertIn("tt_hits", datos)
++        self.assertIn("tt_stores", datos)
+         self.assertGreaterEqual(datos["nps"], 0)
+ 
++    def test_clave_tt_incluye_turno_puntos_y_distancia(self):
++        base = Estado.desde_dict({"blancas": ["e4"], "negras": ["f5"], "turno": "blancas"})
++        otro_turno = Estado.desde_dict(
++            {"blancas": ["e4"], "negras": ["f5"], "turno": "negras"}
++        )
++        otros_puntos = Estado.desde_dict(
++            {
++                "blancas": ["e4"],
++                "negras": ["f5"],
++                "turno": "blancas",
++                "puntos": {"blancas": 1},
++            }
++        )
++        clave = strategy._clave_tt(base, "blancas", 2)
++        self.assertNotEqual(clave, strategy._clave_tt(otro_turno, "blancas", 2))
++        self.assertNotEqual(clave, strategy._clave_tt(otros_puntos, "blancas", 2))
++        self.assertNotEqual(clave, strategy._clave_tt(base, "blancas", 3))
++
++    def test_tt_reutiliza_valor_exacto(self):
++        estado = Estado.inicial()
++        contexto = {"limite": float("inf"), "nodos": 0, "perspectiva": "blancas"}
++        primero = strategy._valor(estado, 1, contexto)
++        nodos_primera = contexto["nodos"]
++        contexto2 = {"limite": float("inf"), "nodos": 0, "perspectiva": "blancas"}
++        segundo = strategy._valor(estado, 1, contexto2)
++        self.assertEqual(primero, segundo)
++        self.assertEqual(contexto2["tt_hits"], 1)
++        self.assertEqual(contexto2["nodos"], 1)
++        self.assertGreater(nodos_primera, contexto2["nodos"])
++
++    def test_tt_es_acotada_y_prefiere_entrada_mas_profunda(self):
++        contexto = {"tt_stores": 0}
++        with patch.object(strategy, "TT_MAX_ENTRIES", 2):
++            strategy._guardar_tt(("a",), 3, strategy.TT_EXACT, 1.0, contexto)
++            strategy._guardar_tt(("a",), 1, strategy.TT_UPPER, 0.0, contexto)
++            strategy._guardar_tt(("b",), 1, strategy.TT_EXACT, 2.0, contexto)
++            strategy._guardar_tt(("c",), 1, strategy.TT_EXACT, 3.0, contexto)
++        self.assertEqual(len(strategy._TT), 2)
++        self.assertEqual(strategy._TT[("a",)], (3, strategy.TT_EXACT, 1.0))
++        self.assertIn(("c",), strategy._TT)
++        self.assertNotIn(("b",), strategy._TT)
++        strategy._TT.clear()
++
+     def test_evitar_dejar_anotacion_inmediata(self):
+         estado = Estado.desde_dict(
+             {
