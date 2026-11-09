@@ -1,0 +1,8 @@
+{
+  "c_exploracion": 0.85,
+  "peso_heuristica": 0.40,
+  "sims_por_hoja": 10,
+  "max_cache": 5000,
+  "fraccion_turno": 25.0,
+  "reserva_reloj": 0.30
+}
