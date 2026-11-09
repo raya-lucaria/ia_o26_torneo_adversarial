@@ -1,0 +1,3 @@
+# Datos de entrenamiento que generan herramientas/datos.py, entrenar.py y reetiquetar.py
+# (~35 MB): se regeneran con esas herramientas y no se suben. El bot solo lee data/pesos.npz.
+datos_entrenamiento/

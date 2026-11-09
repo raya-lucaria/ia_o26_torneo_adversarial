@@ -1,0 +1,5 @@
+nombre = "maquinas_del_trabajo"
+integrantes = [
+  { nombre = "Luis Alberto Islas Muro", clave_unica = "000212541" },
+  { nombre = "Julia Rojas Pereyra", clave_unica = "000214639" },
+]
