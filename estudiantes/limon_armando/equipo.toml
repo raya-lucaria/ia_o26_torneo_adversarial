@@ -1,0 +1,5 @@
+nombre = "limon_armando"
+integrantes = [
+  { nombre = "Ricardo Emilio Limon Santamaria", clave_unica = "000219636" },
+  { nombre = "Carlos Armando Ibarrarán Arnaldo", clave_unica = "000201598" },
+]
