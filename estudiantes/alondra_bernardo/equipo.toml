@@ -1,0 +1,5 @@
+nombre = "alondra_bernardo"
+integrantes = [
+  { nombre = "Alondra Valdivia", clave_unica = "218713" },
+  { nombre = "Bernardo Murrieta", clave_unica = "220734" },
+]
