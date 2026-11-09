@@ -1,0 +1,4 @@
+nombre = "potential_man"
+integrantes = [
+  { nombre = "Patricio Tanus Moctezuma", clave_unica = "000195552" }
+]
