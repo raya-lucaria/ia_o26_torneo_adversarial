@@ -1,0 +1,5 @@
+nombre = "torneo_breakthrough"
+integrantes = [
+  { nombre = "Israel Sánchez Falcón", clave_unica = "220461" },
+  { nombre = "Alejandro Ozymandias Cepeda Beltrán", clave_unica = "219451" },
+]
