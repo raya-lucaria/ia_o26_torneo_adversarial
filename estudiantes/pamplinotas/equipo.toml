@@ -1,0 +1,5 @@
+nombre = "pamplinotas"
+integrantes = [
+  { nombre = "Nadia Paola Medina García", clave_unica = "220896" },
+  { nombre = "Alexis Cuevas Heras", clave_unica = "219050" },
+]
