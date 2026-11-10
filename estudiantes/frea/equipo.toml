@@ -1,0 +1,5 @@
+nombre = "frea"
+integrantes = [
+  { nombre = "Luis Fernando Rodríguez Retama", clave_unica = "208047" },
+  { nombre = "Emiliano Aguilar Castillo", clave_unica = "209393" },
+]
