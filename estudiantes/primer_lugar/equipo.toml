@@ -1,0 +1,5 @@
+nombre = "primer_lugar"
+integrantes = [
+  { nombre = "Paris López", clave_unica = "000218491" },
+  { nombre = "Alejandro Martínez", clave_unica = "000218777" },
+]

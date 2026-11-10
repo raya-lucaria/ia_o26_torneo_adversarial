@@ -1,0 +1,7 @@
+{
+  "formato": 2,
+  "version": "referencia_manual_v2",
+  "rasgos": ["constante","puntos","material","tres_avanzados","movilidad","apoyo","anotaciones_disponibles","exposicion_rival_menos_propia","amenaza_tercer_punto"],
+  "pesos": [0,5,1,2,0.5,0.5,3,1,5],
+  "nota": "Hipotesis manual previa a validacion. Salida acotada, sin calibracion demostrada."
+}
