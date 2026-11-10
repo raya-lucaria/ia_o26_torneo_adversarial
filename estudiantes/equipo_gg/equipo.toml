@@ -1,0 +1,5 @@
+nombre = "equipo_gg"
+integrantes = [
+  { nombre = "Genevieve Martinez Teran", clave_unica = "202728" },
+  { nombre = "Ismael Cabrera Arroyo", clave_unica = "217632" },
+]
