@@ -1,0 +1,4 @@
+nombre = "nan"
+integrantes = [
+  { nombre = "Náyade Velasco", clave_unica = "000214014" }
+]
