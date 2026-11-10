@@ -1,0 +1,6 @@
+nombre = "liszt_breakthrough2"
+integrantes = [
+  { nombre = "Emilio Martínez", clave_unica = "211675" },
+  { nombre = "Santiago Quiñones", clave_unica = "214196" }, 
+]
+
