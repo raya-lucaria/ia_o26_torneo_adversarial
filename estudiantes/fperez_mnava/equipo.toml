@@ -1,0 +1,5 @@
+nombre = "fperez_mnava"
+integrantes = [
+  { nombre = "Francisco Pérez Trofimoff", clave_unica = "000214552" },
+  { nombre = "Mateo Nava Baños", clave_unica = "000214578" },
+]
