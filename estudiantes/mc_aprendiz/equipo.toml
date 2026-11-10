@@ -1,0 +1,6 @@
+nombre = "mc_aprendiz"
+
+integrantes = [
+  { nombre = "Ingeniero Aprendiz Uno", clave_unica = "202613001" },
+  { nombre = "Ingeniero Aprendiz Dos", clave_unica = "202613002" },
+]
