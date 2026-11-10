@@ -1,0 +1,5 @@
+nombre = "iacasitegano"
+integrantes = [
+  { nombre = "José Malfavaun Gorostizaga", clave_unica = "000213398" },
+  { nombre = "Daphne Ivette Vela Villegas", clave_unica = "000211927" },
+]

@@ -1,0 +1,24 @@
+# Imagen autocontenida para la corrida UCT14h de desarrollo.
+# Se usa solo en el Job local de Docker Desktop; no forma parte de la entrega.
+FROM torneo-bot-base:local
+
+USER root
+WORKDIR /workspace
+
+# `kubectl cp` usa tar dentro del contenedor para recuperar los artefactos.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends tar \
+    && rm -rf /var/lib/apt/lists/*
+
+# El código y los pesos quedan dentro de la imagen: Kubernetes Desktop no
+# necesita montar rutas del macOS anfitrión como hostPath.
+COPY sistema /workspace/sistema
+COPY estudiantes/iacasitegano /workspace/estudiantes/iacasitegano
+
+ENV PYTHONPATH=/workspace/sistema:/workspace/estudiantes/iacasitegano:/workspace/estudiantes/iacasitegano/herramientas \
+    NUMBA_CACHE_DIR=/tmp/numba \
+    OPENBLAS_NUM_THREADS=1 \
+    OMP_NUM_THREADS=1 \
+    NUMBA_NUM_THREADS=1
+
+CMD ["python", "-B"]
