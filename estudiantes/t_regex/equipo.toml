@@ -1,0 +1,5 @@
+nombre = "t_regex"
+integrantes = [
+  { nombre = "Ariadna Quijano", clave_unica = "219656" },
+  { nombre = "Ben Zimbrón", clave_unica = "212907" },
+]
