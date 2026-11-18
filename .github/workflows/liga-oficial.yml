@@ -22,6 +22,10 @@ on:
         description: "Publicar aunque haya parejas excluidas por fallas de infraestructura"
         type: boolean
         default: false
+      publicar:
+        description: "Publicar tabla y sitio (rama oficial y Pages). Sin marcar: solo guarda los datos cifrados"
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -44,4 +48,5 @@ jobs:
       shards: ${{ fromJSON(inputs.shards) }}
       verbose: ${{ inputs.verbose }}
       aceptar_incidentes: ${{ inputs.aceptar_incidentes }}
+      publicar: ${{ inputs.publicar }}
     secrets: inherit

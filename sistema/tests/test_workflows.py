@@ -347,3 +347,26 @@ def test_prueba_usa_los_mismos_nombres_que_el_validador():
 def test_juntar_shards_rechaza_estados_de_otra_liga():
     texto = (WORKFLOWS / "_liga.yml").read_text()
     assert 'cmp -s "$global" "$ESTADO/estado_liga.json"' in texto
+
+
+def test_liga_sin_publicar_no_muestra_resultados_y_guarda_cifrado():
+    """publicar=false: nada de tabla en logs/resumen públicos, ni rama ni Pages; datos cifrados."""
+    oficial = cargar("liga-oficial.yml")
+    assert oficial["on"]["workflow_dispatch"]["inputs"]["publicar"]["default"] is True
+    (llamada,) = oficial["jobs"].values()
+    assert llamada["with"]["publicar"] == "${{ inputs.publicar }}"
+    liga = cargar("_liga.yml")
+    assert liga["on"]["workflow_call"]["inputs"]["publicar"]["default"] is True
+    jobs = liga["jobs"]
+    assert jobs["pages"]["if"].endswith("&& inputs.publicar")
+    publicar = jobs["publicar"]
+    for nombre in ("Tabla, calificaciones y sitio", "Commit a la rama ${{ env.RAMA }}"):
+        assert _paso(publicar, nombre)["if"] == "inputs.publicar", nombre
+    guardar = _paso(publicar, "Guardar la liga juntada sin publicar")
+    assert guardar["if"] == "${{ !inputs.publicar }}"
+    assert "LIGA_DESTINATARIO" in guardar["run"] and "LIGA_LLAVE" not in guardar["run"]
+    subidas = [p for p in publicar["steps"] if "upload-artifact" in p.get("uses", "")]
+    assert {p["with"]["name"]: p["if"] for p in subidas} == {
+        "liga-${{ inputs.modo }}-datos": "${{ !inputs.publicar }}",
+        "liga-${{ inputs.modo }}-resultados": "inputs.publicar",
+    }

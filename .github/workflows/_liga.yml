@@ -27,6 +27,11 @@ on:
       aceptar_incidentes:
         type: boolean
         default: false
+      # false: no calcula la tabla aquí (los logs y el resumen de un repo público se ven) ni
+      # toca la rama ni Pages; solo guarda la liga juntada, cifrada, en «liga-<modo>-datos».
+      publicar:
+        type: boolean
+        default: true
 
 defaults:
   run:
@@ -414,7 +419,27 @@ jobs:
             age-keygen -y "$RUNNER_TEMP/desechable.txt" >sistema/llave_profesor.age.pub
           fi
 
+      - name: Guardar la liga juntada sin publicar
+        if: ${{ !inputs.publicar }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/datos"
+          tar -czf "$RUNNER_TEMP/datos/liga.tar.gz" -C "$(dirname "$ESTADO")" "$(basename "$ESTADO")"
+          if [[ "$MODO" == oficial ]]; then
+            age --encrypt -r "$LIGA_DESTINATARIO" -o "$RUNNER_TEMP/datos/liga.tar.gz.age" \
+              "$RUNNER_TEMP/datos/liga.tar.gz"
+            rm -f "$RUNNER_TEMP/datos/liga.tar.gz"
+          fi
+          ls -l "$RUNNER_TEMP/datos"
+
+      - if: ${{ !inputs.publicar }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: liga-${{ inputs.modo }}-datos
+          path: ${{ runner.temp }}/datos/
+          retention-days: 90
+
       - name: Tabla, calificaciones y sitio
+        if: inputs.publicar
         env:
           ACEPTAR: ${{ inputs.aceptar_incidentes }}
         run: |
@@ -425,6 +450,7 @@ jobs:
           cat "$ESTADO/resumen.md" >>"$GITHUB_STEP_SUMMARY"
 
       - name: Commit a la rama ${{ env.RAMA }}
+        if: inputs.publicar
         env:
           TOKEN: ${{ github.token }}
         run: |
@@ -459,7 +485,8 @@ jobs:
           git -C "$destino" commit --quiet -m "Liga $MODO $(date -u +%Y-%m-%dT%H:%MZ) (run $GITHUB_RUN_ID)"
           git -C "$destino" push --quiet origin "HEAD:refs/heads/$RAMA"
 
-      - uses: actions/upload-artifact@v4
+      - if: inputs.publicar
+        uses: actions/upload-artifact@v4
         with:
           name: liga-${{ inputs.modo }}-resultados
           path: |
@@ -474,7 +501,7 @@ jobs:
   pages:
     # Pages publica un solo sitio: la rama «oficial» en la raíz y «ensayo» en /ensayo/.
     needs: [publicar]
-    if: github.repository == 'raya-lucaria/ia_o26_torneo_adversarial' && github.ref == 'refs/heads/main'
+    if: github.repository == 'raya-lucaria/ia_o26_torneo_adversarial' && github.ref == 'refs/heads/main' && inputs.publicar
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
